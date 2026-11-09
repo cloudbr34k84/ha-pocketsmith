@@ -169,15 +169,15 @@ class TestCategorySensor:
     def test_unique_id_contains_category_id(self):
         assert "10" in self._make().unique_id
 
-    def test_not_over_budget_icon(self):
-        assert self._make().icon == "mdi:cash-check"
+    def test_not_over_budget(self):
+        assert not self._make().extra_state_attributes["over_budget"]
 
-    def test_over_budget_icon(self):
+    def test_over_budget(self):
         cat = {**ENRICHED_CAT, "over_budget": True}
         data = {**SAMPLE_DATA, "enriched_categories": [cat]}
         coord = _make_coordinator(data)
         sensor = PocketSmithCategorySensor(coord, cat)
-        assert sensor.icon == "mdi:cash-remove"
+        assert sensor.extra_state_attributes["over_budget"]
 
     def test_extra_state_attributes(self):
         attrs = self._make().extra_state_attributes

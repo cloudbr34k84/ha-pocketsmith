@@ -30,8 +30,7 @@ def _make_device_info(coordinator) -> DeviceInfo:
 
 ACCOUNT_BALANCE_DESCRIPTION = SensorEntityDescription(
     key="balance",
-    name="Account Balance",
-    icon="mdi:currency-usd",
+    translation_key="account_balance",
     device_class=SensorDeviceClass.MONETARY,
     state_class=SensorStateClass.TOTAL,
 )
@@ -104,6 +103,7 @@ class PocketSmithSensor(CoordinatorEntity, SensorEntity):
         """Initialise the sensor."""
         super().__init__(coordinator)
         self._account_id = account["id"]
+        self._attr_translation_placeholders = {"account": account.get("title") or "Unnamed Account"}
         self.entity_description = ACCOUNT_BALANCE_DESCRIPTION
         self._attr_device_info = _make_device_info(self.coordinator)
 
@@ -120,11 +120,11 @@ class PocketSmithSensor(CoordinatorEntity, SensorEntity):
         """Return a stable unique ID for this sensor."""
         return "pocketsmith_%s_balance" % self._account_id
 
-    @property
-    def name(self) -> str:
-        """Return the sensor name."""
-        account_title = self._account.get("title", "Unnamed Account")
-        return "%s Balance" % account_title
+    def _handle_coordinator_update(self) -> None:
+        """Keep the translated name aligned with the PocketSmith account."""
+        self._attr_translation_placeholders["account"] = self._account.get("title") or "Unnamed Account"
+        self.__dict__.pop("name", None)
+        super()._handle_coordinator_update()
 
     @property
     def native_value(self):
@@ -178,11 +178,6 @@ class PocketSmithUncategorisedTransactions(CoordinatorEntity, SensorEntity):
         """Return the unit of measurement."""
         return "transactions"
 
-    @property
-    def icon(self) -> str:
-        """Return the sensor icon."""
-        return "mdi:alert-circle-outline"
-
 
 class PocketSmithCategoriesSensor(CoordinatorEntity, SensorEntity):
     """Sensor reporting the total number of PocketSmith categories."""
@@ -209,11 +204,6 @@ class PocketSmithCategoriesSensor(CoordinatorEntity, SensorEntity):
         return len(self.coordinator.data.get("enriched_categories", []))
 
     @property
-    def icon(self) -> str:
-        """Return the sensor icon."""
-        return "mdi:cash-minus"
-
-    @property
     def extra_state_attributes(self) -> dict:
         """Return budgeted and unbudgeted category name lists."""
         cats = self.coordinator.data.get("enriched_categories", [])
@@ -227,6 +217,7 @@ class PocketSmithCategorySensor(CoordinatorEntity, SensorEntity):
     """Sensor representing a single enriched PocketSmith category."""
 
     _attr_has_entity_name = True
+    _attr_translation_key = "category"
     _attr_device_class = SensorDeviceClass.MONETARY
     _attr_state_class = SensorStateClass.TOTAL
 
@@ -266,13 +257,6 @@ class PocketSmithCategorySensor(CoordinatorEntity, SensorEntity):
     def native_unit_of_measurement(self) -> str:
         """Return the currency code."""
         return self._enriched.get("currency", DEFAULT_CURRENCY)
-
-    @property
-    def icon(self) -> str:
-        """Return the sensor icon based on whether the category is over budget."""
-        if self._enriched.get("over_budget"):
-            return "mdi:cash-remove"
-        return "mdi:cash-check"
 
     @property
     def extra_state_attributes(self) -> dict:
@@ -319,6 +303,7 @@ class PocketSmithCategoryRollupSensor(CoordinatorEntity, SensorEntity):
     """
 
     _attr_has_entity_name = True
+    _attr_translation_key = "category_rollup"
     _attr_device_class = SensorDeviceClass.MONETARY
     _attr_state_class = SensorStateClass.TOTAL
 
@@ -333,6 +318,7 @@ class PocketSmithCategoryRollupSensor(CoordinatorEntity, SensorEntity):
         """Initialise the rollup sensor."""
         super().__init__(coordinator)
         self._category_id = category_id
+        self._attr_translation_placeholders = {"category": category_title}
         raw_slug = category_title.lower().replace(" ", "_")
         self._category_slug = re.sub(r"[^\w]", "", raw_slug)
         self._category_level = category_level
@@ -343,16 +329,14 @@ class PocketSmithCategoryRollupSensor(CoordinatorEntity, SensorEntity):
     def unique_id(self) -> str:
         return "pocketsmith_rollup_%s" % self._category_id
 
-    @property
-    def name(self) -> str:
+    def _handle_coordinator_update(self) -> None:
+        """Keep the translated name aligned with the parent category."""
         for cat in self.coordinator.data.get("enriched_categories", []):
             if cat.get("category_id") == self._category_id:
-                return f"Rollup: {cat.get('category_title', self._category_slug)}"
-        return f"Rollup: {self._category_slug}"
-
-    @property
-    def icon(self) -> str:
-        return "mdi:folder-open"
+                self._attr_translation_placeholders["category"] = cat.get("category_title") or self._category_slug
+                self.__dict__.pop("name", None)
+                break
+        super()._handle_coordinator_update()
 
     @property
     def native_unit_of_measurement(self) -> str:
@@ -446,11 +430,6 @@ class PocketSmithNetWorthSensor(CoordinatorEntity, SensorEntity):
             return (accounts[0].get("currency_code") or DEFAULT_CURRENCY).upper()
         return DEFAULT_CURRENCY
 
-    @property
-    def icon(self) -> str:
-        """Return the sensor icon."""
-        return "mdi:bank"
-
 
 class PocketSmithUserSensor(CoordinatorEntity, SensorEntity):
     """Sensor reporting PocketSmith user profile information."""
@@ -475,11 +454,6 @@ class PocketSmithUserSensor(CoordinatorEntity, SensorEntity):
     def native_value(self):
         """Return the user's name."""
         return self.coordinator.data.get("user", {}).get("name")
-
-    @property
-    def icon(self) -> str:
-        """Return the sensor icon."""
-        return "mdi:account-circle"
 
     @property
     def extra_state_attributes(self) -> dict:

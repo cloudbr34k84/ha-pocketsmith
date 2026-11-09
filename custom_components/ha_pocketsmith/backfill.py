@@ -57,7 +57,7 @@ from .const import (
     DOMAIN,
     BackfillState,
 )
-from .repairs import raise_backfill_failed_issue
+from .repairs import clear_backfill_failed_issue, raise_backfill_failed_issue
 from .statistics import (
     _account_statistic_id,
     _category_statistic_id,
@@ -99,8 +99,10 @@ async def _run_backfill(hass: HomeAssistant, coordinator, data: dict, backfill_s
     try:
         await _run_backfill_inner(hass, coordinator, data, backfill_state)
     except Exception:
+        failed_account = backfill_state.current_account or "Unknown"
         backfill_state.status = BACKFILL_STATUS_FAILED
         backfill_state.current_account = None
+        raise_backfill_failed_issue(hass, failed_account)
         _LOGGER.exception(
             "PocketSmith backfill crashed unexpectedly — progress saved so far will be "
             "retained. Restart Home Assistant to retry from the last completed account."
@@ -158,6 +160,7 @@ async def _run_backfill_inner(hass: HomeAssistant, coordinator, data: dict, back
     today = dt_util.now().date()
 
     pending_accounts = [a for a in accounts if a["id"] not in completed_accounts]
+    had_failure = False
     backfill_state.status = BACKFILL_STATUS_RUNNING
     backfill_state.accounts_total = len(accounts)
     backfill_state.accounts_remaining = len(pending_accounts)
@@ -178,6 +181,7 @@ async def _run_backfill_inner(hass: HomeAssistant, coordinator, data: dict, back
         )
 
         if daily_nets is None:
+            had_failure = True
             # API error exhausted retries for this account — skip it, continue with others.
             # Auth failures do not reach here; they propagate and abort the whole task.
             _LOGGER.warning(
@@ -311,12 +315,14 @@ async def _run_backfill_inner(hass: HomeAssistant, coordinator, data: dict, back
     _LOGGER.info("Backfill: inserted %d category-month spend rows across %d categories",
                  cat_rows_written, len(cats_seen))
 
-    # Mark fully done.
-    await store.async_save({"completed_accounts": list(completed_accounts), "all_done": True})
-    backfill_state.status = BACKFILL_STATUS_COMPLETE
+    # Keep failed accounts eligible for a later retry.
+    await store.async_save({"completed_accounts": list(completed_accounts), "all_done": not had_failure})
+    if not had_failure:
+        clear_backfill_failed_issue(hass)
+    backfill_state.status = BACKFILL_STATUS_FAILED if had_failure else BACKFILL_STATUS_COMPLETE
     backfill_state.accounts_remaining = 0
     backfill_state.current_account = None
-    _LOGGER.info("PocketSmith backfill complete")
+    _LOGGER.info("PocketSmith backfill %s", "incomplete" if had_failure else "complete")
 
 
 # ---------------------------------------------------------------------------

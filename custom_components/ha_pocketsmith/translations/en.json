@@ -59,6 +59,9 @@
   },
   "entity": {
     "sensor": {
+      "account_balance": {"name": "{account} Balance"},
+      "category_rollup": {"name": "Rollup: {category}"},
+      "category": {"name": "Category"},
       "uncategorised_transactions": {
         "name": "Uncategorised Transactions"
       },
@@ -115,6 +118,9 @@
     }
   },
   "exceptions": {
+    "entry_not_loaded": {"message": "PocketSmith must be configured and loaded before running this action."},
+    "backfill_running": {"message": "A PocketSmith backfill is already running."},
+    "backfill_disabled": {"message": "Enable historical backfill before resetting it."},
     "refresh_failed": {"message": "Unable to refresh PocketSmith data."},
     "reset_backfill_failed": {"message": "Unable to reset PocketSmith backfill progress."},
     "restart_backfill_failed": {"message": "Unable to restart PocketSmith backfill."},

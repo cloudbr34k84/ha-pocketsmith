@@ -25,14 +25,18 @@ async def test_historical_import(hass, mode):
         patch.object(backfill, "_sweep_account", new_callable=AsyncMock, return_value=sweep),
         patch.object(backfill, "async_add_external_statistics") as insert,
         patch.object(backfill, "raise_backfill_failed_issue") as repair,
+        patch.object(backfill, "clear_backfill_failed_issue") as clear_repair,
     ):
         store.return_value.async_load = AsyncMock(return_value=stored)
         store.return_value.async_save = AsyncMock()
         await backfill._run_backfill_inner(hass, MagicMock(), data, state)
-        assert state.status == "complete"
+        assert state.status == ("failed" if mode == "failed" else "complete")
         if mode == "failed":
             repair.assert_called_once()
+            clear_repair.assert_not_called()
+            assert not store.return_value.async_save.call_args.args[0]["all_done"]
         if mode == "success":
+            clear_repair.assert_called_once_with(hass)
             assert insert.call_count == 4
             assert insert.call_args_list[0].args[2][-1]["mean"] == 100
             assert store.return_value.async_save.call_args.args[0]["all_done"]
@@ -40,9 +44,10 @@ async def test_historical_import(hass, mode):
 
 async def test_background_failure_and_skips(hass):
     state = BackfillState()
-    with patch.object(backfill, "_run_backfill_inner", side_effect=RuntimeError()):
+    with patch.object(backfill, "_run_backfill_inner", side_effect=RuntimeError()), patch.object(backfill, "raise_backfill_failed_issue") as repair:
         await backfill._run_backfill(hass, MagicMock(), {}, state)
     assert state.status == "failed"
+    repair.assert_called_once_with(hass, "Unknown")
     for options, status in [({"enable_backfill": False}, "idle"), ({}, "running")]:
         entry = MagicMock(options=options)
         state = BackfillState(status=status)

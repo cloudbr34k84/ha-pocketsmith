@@ -113,6 +113,10 @@ If the integration raises an authentication error, it will prompt you to re-auth
 
 All entities belong to a single **PocketSmith** device in Home Assistant.
 
+The Categories, User, Backfill Status, and Forecast Needs Recalculate diagnostic
+entities are disabled by default for new installations. Enable them from the
+integration's entity list if needed.
+
 ## Supported functionality
 
 PocketSmith is a cloud finance service rather than a physical device. The
@@ -127,6 +131,7 @@ categories, budgets, or bank connections.
 - Data is refreshed hourly unless a manual refresh is requested.
 - Historical backfill can take a long time for accounts with extensive history.
 - PocketSmith API availability and rate limits can delay updates.
+- Category spend sensors use a fixed icon; use the Over Budget binary sensor or the `over_budget` attribute for alerts.
 
 ### Sensors
 
@@ -522,7 +527,7 @@ This integration supports the Home Assistant diagnostics feature. To download a 
 1. Go to **Settings → Devices & Services → PocketSmith**.
 2. Click the three-dot menu (⋮) and select **Download diagnostics**.
 
-The report includes entry configuration (API key redacted), coordinator data counts, budget package summaries, and bill category event coverage. Useful when reporting bugs.
+The report includes entry configuration with the API key redacted, options, and aggregate counts for accounts, categories, budget packages, and bill events. It excludes user profiles, category names, identifiers, and financial amounts. Useful when reporting bugs.
 
 ---
 

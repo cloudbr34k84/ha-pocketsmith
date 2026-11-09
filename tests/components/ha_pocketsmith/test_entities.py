@@ -28,7 +28,20 @@ async def test_platform_entities(hass, mock_entry):
     rollup = next(e for e in entities if isinstance(e, sensor.PocketSmithCategoryRollupSensor))
     assert rollup.native_value == 5
     assert rollup.extra_state_attributes["over_by"] == 3
-    assert rollup.name == "Rollup: Living"
+    assert rollup.translation_placeholders == {"category": "Living"}
+    account = next(e for e in entities if isinstance(e, sensor.PocketSmithSensor))
+    assert account.translation_placeholders == {"account": "Savings"}
+    coordinator.data["accounts"][0]["title"] = "Emergency fund"
+    coordinator.data["enriched_categories"][0]["category_title"] = "Household"
+    account.__dict__["name"] = "old name"
+    rollup.__dict__["name"] = "old name"
+    with patch("homeassistant.helpers.update_coordinator.CoordinatorEntity._handle_coordinator_update"):
+        account._handle_coordinator_update()
+        rollup._handle_coordinator_update()
+    assert account.translation_placeholders == {"account": "Emergency fund"}
+    assert rollup.translation_placeholders == {"category": "Household"}
+    assert "name" not in account.__dict__
+    assert "name" not in rollup.__dict__
     assert rollup.native_unit_of_measurement == "AUD"
     currency = next(e for e in entities if isinstance(e, select.PocketSmithActiveCurrencySelect))
     assert currency.options == ["AUD"]
@@ -48,7 +61,6 @@ async def test_platform_entities(hass, mock_entry):
     for age in (0, 25):
         coordinator.data["forecast_last_updated"] = dt_util.utcnow() - timedelta(hours=age)
         assert forecast.is_on is (age > 24)
-        assert forecast.icon
     coordinator.data["accounts"] = []
     coordinator.data["enriched_categories"] = []
     coordinator.data["uncategorised_count"] = 0
@@ -56,7 +68,7 @@ async def test_platform_entities(hass, mock_entry):
     assert currency.options == ["AUD"]
     assert currency.current_option == "AUD"
     assert rollup.native_value == 0
-    assert rollup.name == "Rollup: living"
+    assert rollup.translation_placeholders == {"category": "Household"}
     assert not rollup.extra_state_attributes["over_budget"]
     for entity in entities:
         for prop in ("name", "native_value", "extra_state_attributes", "is_on", "icon"):

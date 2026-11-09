@@ -33,20 +33,25 @@ def test_statistics_snapshot(hass):
 
 
 async def test_diagnostics_redaction_and_budget_summary(hass, mock_entry):
-    mock_entry.data = {"developer_key": "secret"}
+    mock_entry.data = {"developer_key": "secret", "unexpected_private_field": "private-entry"}
+    mock_entry.options = {"unexpected_private_option": "private-option"}
     mock_entry.runtime_data.coordinator.data = {
         "user": {"email": "private", "tell_a_friend_code": "code"},
-        "enriched_categories": [{"category_id": 1, "is_bill": True, "actual": None, "budgeted": None}],
+        "enriched_categories": [{"category_id": 1, "category_title": "private-category", "is_bill": True, "actual": None, "budgeted": None}],
         "monthly_events": {1: 5},
         "budget": [None, {}, {"category": {"id": 1}, "expense": {"periods": [{"current": True}]}},
                    {"category": {"id": 2}}],
     }
     result = await diagnostics.async_get_config_entry_diagnostics(hass, mock_entry)
     assert result["entry_data"]["developer_key"] == "**REDACTED**"
-    assert result["user"]["email"] == "**REDACTED**"
-    assert result["bill_event_summary"][0]["has_event"]
-    assert result["budget_package_summary"][0]["has_current_period"]
-    assert not result["budget_package_summary"][1]["has_current_period"]
+    assert "private" not in str(result)
+    assert "code" not in str(result)
+    assert "secret" not in str(result)
+    assert "private-entry" not in str(result)
+    assert "private-option" not in str(result)
+    assert "private-category" not in str(result)
+    assert result["summary"]["bill_categories_with_events"] == 1
+    assert result["summary"]["budget_packages_with_current_period"] == 1
     assert result["summary"]["categories_with_null_actual"] == 1
 
 

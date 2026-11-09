@@ -122,7 +122,7 @@ rules:
     comment: All entities are grouped under one PocketSmith service device per config entry.
   diagnostics:
     status: done
-    comment: Diagnostics redact credentials and provide API and data summaries.
+    comment: Diagnostics expose aggregate counts and allowlisted options; credentials, profiles, identifiers and financial values are excluded.
   discovery:
     status: exempt
     comment: PocketSmith is a cloud service with no discoverable local endpoint.
@@ -164,16 +164,17 @@ rules:
     comment: Less commonly used diagnostic entities are disabled by default.
   entity-translations:
     status: done
-    comment: Entity names are provided through strings and English translations.
+    comment: Entity names use translation keys; dynamic account and rollup names use placeholders, while category names are user-defined.
   exception-translations:
     status: done
     comment: Service action errors use translated exception keys.
   icon-translations:
     status: done
-    comment: Custom entity icons are defined through icons.json.
+    comment: Custom entity icons are defined through icons.json, including state-dependent binary sensor icons.
   reconfiguration-flow:
-    status: done
-    comment: Users can replace the developer key through the UI reconfigure flow.
+    status: todo
+    comment: >-
+      The UI replaces and validates API keys, but does not verify that a replacement key belongs to the same PocketSmith account.
   repair-issues:
     status: done
     comment: Uncategorised data and failed backfill create translated repair issues.

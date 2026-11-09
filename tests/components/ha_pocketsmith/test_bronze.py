@@ -20,8 +20,9 @@ async def test_actions_unavailable_entry(hass, action, has_entry):
         entry.add_to_hass(hass)
     await async_setup(hass, {})
     assert hass.services.has_service(DOMAIN, action)
-    with pytest.raises(ServiceValidationError, match="configured and loaded"):
+    with pytest.raises(ServiceValidationError) as error:
         await hass.services.async_call(DOMAIN, action, {}, blocking=True, return_response=action == "get_budget_summary")
+    assert error.value.translation_key == "entry_not_loaded"
 
 
 async def test_actions_survive_unload(hass):
@@ -94,8 +95,9 @@ async def test_reset_preconditions_before_storage_mutation(hass, state):
             store.return_value.async_remove.assert_awaited_once()
             trigger.assert_awaited_once()
         else:
-            with pytest.raises(ServiceValidationError):
+            with pytest.raises(ServiceValidationError) as error:
                 await hass.services.async_call(DOMAIN, "reset_backfill", {}, blocking=True)
+            assert error.value.translation_key == ("backfill_running" if state == "running" else "backfill_disabled")
             store.assert_not_called()
             trigger.assert_not_called()
 

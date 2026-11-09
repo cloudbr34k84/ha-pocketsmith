@@ -1,12 +1,16 @@
 ## [v0.6.0] - Unreleased
 
 ### Changed
+- Move entity icons and dynamic account and rollup names to Home Assistant translations. Category spend sensors now use a fixed icon; over-budget state remains available as an attribute and binary sensor.
+- Limit diagnostics to allowlisted options and aggregate counts, excluding user profiles, identifiers, names and financial amounts.
 - Register integration actions at startup and validate that the entry is loaded.
 - Use hourly polling and retire the configurable polling number entity.
 - Replace title-based entity unique IDs with stable account/category IDs, migrating existing registry entries.
 - Require Home Assistant 2026.3 or later to use locally shipped brand assets.
 
 ### Fixed
+- Keep failed historical backfills incomplete so affected accounts can be retried; clear the repair after a successful sweep.
+- Translate service action validation errors.
 - Report failed coordinator refreshes through the refresh action and button.
 - Cancel and await historical backfill when unloading an integration entry.
 - Log backfill API outages and recovery once per transition, with retry details at debug level.

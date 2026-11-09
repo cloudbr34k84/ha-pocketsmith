@@ -68,11 +68,6 @@ class PocketSmithOverBudgetBinarySensor(CoordinatorEntity, BinarySensorEntity):
         return len(self._over_budget_packages) > 0
 
     @property
-    def icon(self) -> str:
-        """Return the sensor icon."""
-        return "mdi:alert-circle" if self._over_budget_packages else "mdi:check-circle"
-
-    @property
     def extra_state_attributes(self) -> dict:
         """Return details of over-budget categories."""
         over_budget = self._over_budget_packages
@@ -105,15 +100,6 @@ class PocketSmithForecastNeedsRecalculateBinarySensor(CoordinatorEntity, BinaryS
             return True
         return (dt_util.utcnow() - last_updated).total_seconds() > 86400
 
-    @property
-    def icon(self) -> str:
-        """Return the sensor icon."""
-        last_updated = self.coordinator.data.get("forecast_last_updated")
-        if last_updated is None:
-            return "mdi:refresh-circle"
-        stale = (dt_util.utcnow() - last_updated).total_seconds() > 86400
-        return "mdi:refresh-circle" if stale else "mdi:check-circle"
-
 
 class PocketSmithHasUncategorisedBinarySensor(CoordinatorEntity, BinarySensorEntity):
     """Binary sensor that is on when there are uncategorised transactions."""
@@ -133,11 +119,6 @@ class PocketSmithHasUncategorisedBinarySensor(CoordinatorEntity, BinarySensorEnt
     def is_on(self) -> bool:
         """Return True if there are uncategorised transactions."""
         return self.coordinator.data.get("uncategorised_count", 0) > 0
-
-    @property
-    def icon(self) -> str:
-        """Return the sensor icon."""
-        return "mdi:tag-off" if self.coordinator.data.get("uncategorised_count", 0) > 0 else "mdi:tag-check"
 
     @property
     def extra_state_attributes(self) -> dict:

@@ -1,5 +1,10 @@
 {
   "entity": {
+    "binary_sensor": {
+      "over_budget": {"default": "mdi:check-circle", "state": {"on": "mdi:alert-circle"}},
+      "forecast_needs_recalculate": {"default": "mdi:check-circle", "state": {"on": "mdi:refresh-circle"}},
+      "has_uncategorised": {"default": "mdi:tag-check", "state": {"on": "mdi:tag-off"}}
+    },
     "button": {
       "refresh": {"default": "mdi:refresh"},
       "reset_backfill": {"default": "mdi:history"}
@@ -8,7 +13,13 @@
       "active_currency": {"default": "mdi:currency-usd"}
     },
     "sensor": {
-      "balance": {"default": "mdi:currency-usd"},
+      "account_balance": {"default": "mdi:currency-usd"},
+      "category": {"default": "mdi:cash-check"},
+      "category_rollup": {"default": "mdi:folder-open"},
+      "uncategorised_transactions": {"default": "mdi:alert-circle-outline"},
+      "categories": {"default": "mdi:cash-minus"},
+      "net_worth": {"default": "mdi:bank"},
+      "user": {"default": "mdi:account-circle"},
       "backfill_status": {"default": "mdi:database-clock-outline"}
     }
   }

@@ -25,7 +25,7 @@ def async_register_actions(hass: HomeAssistant) -> None:
     def loaded_entries():
         entries = hass.config_entries.async_entries(DOMAIN)
         if not entries or any(entry.state is not ConfigEntryState.LOADED for entry in entries):
-            raise ServiceValidationError("PocketSmith must be configured and loaded before running this action")
+            raise ServiceValidationError(translation_domain=DOMAIN, translation_key="entry_not_loaded")
         return entries
 
     async def handle_refresh(call: ServiceCall) -> None:
@@ -48,9 +48,9 @@ def async_register_actions(hass: HomeAssistant) -> None:
         async with reset_lock:
             entries = loaded_entries()
             if any(entry.runtime_data.backfill.status == BACKFILL_STATUS_RUNNING for entry in entries):
-                raise ServiceValidationError("A PocketSmith backfill is already running")
+                raise ServiceValidationError(translation_domain=DOMAIN, translation_key="backfill_running")
             if any(not entry.options.get(CONF_ENABLE_BACKFILL, DEFAULT_ENABLE_BACKFILL) for entry in entries):
-                raise ServiceValidationError("Enable historical backfill before resetting it")
+                raise ServiceValidationError(translation_domain=DOMAIN, translation_key="backfill_disabled")
             store = Store(hass, _STORAGE_VERSION, _STORAGE_KEY)
             try:
                 await store.async_remove()
