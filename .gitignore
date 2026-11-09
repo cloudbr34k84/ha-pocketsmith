@@ -4,3 +4,7 @@ release_workflow.md
 release_workflow_template.md
 home-assistant-pocketsmith/.claude
 ha_dev_checklist.md
+
+.coverage
+htmlcov/
+.pytest_cache/

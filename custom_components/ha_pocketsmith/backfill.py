@@ -82,6 +82,9 @@ async def async_trigger_backfill(
         _LOGGER.debug("PocketSmith backfill is disabled in options — skipping")
         return
 
+    if backfill_state.status == BACKFILL_STATUS_RUNNING:
+        return
+    backfill_state.status = BACKFILL_STATUS_RUNNING
     hass.async_create_task(
         _run_backfill(hass, coordinator, data, backfill_state),
         name="pocketsmith_backfill",

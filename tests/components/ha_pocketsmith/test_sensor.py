@@ -61,7 +61,9 @@ class TestPocketSmithSensor:
     def test_unique_id_is_stable(self):
         sensor = self._make(SAMPLE_DATA["accounts"][0])
         assert "1" in sensor.unique_id
-        assert "savings" in sensor.unique_id
+        assert sensor.unique_id == "pocketsmith_1_balance"
+        renamed = {**SAMPLE_DATA["accounts"][0], "title": "Renamed"}
+        assert self._make(renamed).unique_id == sensor.unique_id
 
     def test_native_unit_of_measurement(self):
         sensor = self._make(SAMPLE_DATA["accounts"][0])

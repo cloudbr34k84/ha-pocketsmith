@@ -3,12 +3,12 @@
     "step": {
       "user": {
         "title": "Connect to PocketSmith",
-        "description": "Enter your PocketSmith developer key. You can find it under PocketSmith → Settings → API.",
+        "description": "Enter your PocketSmith developer key. You can find it under PocketSmith \u2192 Settings \u2192 API.",
         "data": {
           "developer_key": "Developer Key"
         },
         "data_description": {
-          "developer_key": "Your PocketSmith developer API key. Find it in PocketSmith under Settings → API → Developer Keys."
+          "developer_key": "Your PocketSmith developer API key. Find it in PocketSmith under Settings \u2192 API \u2192 Developer Keys."
         }
       },
       "reauth_confirm": {
@@ -16,6 +16,9 @@
         "description": "Your PocketSmith developer key was rejected. Enter a new key to restore the connection.",
         "data": {
           "developer_key": "Developer Key"
+        },
+        "data_description": {
+          "developer_key": "Your PocketSmith developer API key. Find it in PocketSmith under Settings \u2192 API \u2192 Developer Keys."
         }
       },
       "reconfigure": {
@@ -25,13 +28,13 @@
           "developer_key": "Developer Key"
         },
         "data_description": {
-          "developer_key": "Your PocketSmith developer API key. Find it in PocketSmith under Settings → API → Developer Keys."
+          "developer_key": "Your PocketSmith developer API key. Find it in PocketSmith under Settings \u2192 API \u2192 Developer Keys."
         }
       }
     },
     "error": {
       "invalid_auth": "Invalid developer key. Please check and try again.",
-      "insufficient_permissions": "Your developer key doesn't have the required permissions. In PocketSmith, go to Settings → API and ensure your key has read access.",
+      "insufficient_permissions": "Your developer key doesn't have the required permissions. In PocketSmith, go to Settings \u2192 API and ensure your key has read access.",
       "cannot_connect": "Unable to reach the PocketSmith API. Check your network connection.",
       "unknown": "An unexpected error occurred. Check the Home Assistant logs."
     },
@@ -46,11 +49,9 @@
       "init": {
         "title": "PocketSmith Options",
         "data": {
-          "update_interval_hours": "Polling interval (hours)",
           "enable_backfill": "Enable historical backfill"
         },
         "data_description": {
-          "update_interval_hours": "How often to fetch data from PocketSmith. Lower values use more API quota.",
           "enable_backfill": "Fetch your full transaction history on first setup to populate long-term statistics graphs. Disable if you have a large history and want to avoid the initial API load."
         }
       }
@@ -93,11 +94,6 @@
         "name": "Reset Backfill"
       }
     },
-    "number": {
-      "polling_interval": {
-        "name": "Polling Interval"
-      }
-    },
     "select": {
       "active_currency": {
         "name": "Active Currency"
@@ -111,7 +107,7 @@
     },
     "reset_backfill": {
       "name": "Reset backfill",
-      "description": "Clear historical backfill progress so all accounts are re-swept on the next startup."
+      "description": "Clear saved historical backfill progress and immediately start a new sweep. Requires a loaded integration, enabled backfill, and no sweep already running."
     },
     "get_budget_summary": {
       "name": "Get budget summary",
@@ -125,7 +121,7 @@
     },
     "backfill_failed": {
       "title": "PocketSmith: historical backfill failed for account {account}",
-      "description": "The historical data sweep for account **{account}** failed after multiple retries. Statistics for this account may be incomplete. To retry, go to the integration options, disable and re-enable **Enable historical backfill**, then restart Home Assistant."
+      "description": "The historical data sweep for account **{account}** failed after multiple retries. Statistics may be incomplete. Enable historical backfill in the integration options, then use the Reset backfill button or action to retry immediately."
     }
   },
   "system_health": {

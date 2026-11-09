@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 
 DOMAIN = "ha_pocketsmith"
 
-CONF_UPDATE_INTERVAL_HOURS = "update_interval_hours"
 CONF_ENABLE_BACKFILL = "enable_backfill"
 CONF_ACTIVE_CURRENCY = "active_currency"
 

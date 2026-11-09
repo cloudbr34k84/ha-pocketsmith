@@ -66,16 +66,10 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
             monthly_transactions, monthly_transaction_counts = await self._fetch_monthly_transactions(session, user_id)
             monthly_events = await self._fetch_monthly_events(session, user_id)
         except aiohttp.ClientError as err:
-            _LOGGER.error("Unable to reach the PocketSmith API: %s", err)
             raise UpdateFailed(
                 "Unable to reach the PocketSmith API. Check your network connection."
             ) from err
         except asyncio.TimeoutError:
-            _LOGGER.error(
-                "PocketSmith API request timed out after %ss (%.1fs elapsed total)",
-                _REQUEST_TIMEOUT,
-                time.monotonic() - _t0,
-            )
             raise UpdateFailed(
                 "PocketSmith API request timed out. Check your network connection."
             )

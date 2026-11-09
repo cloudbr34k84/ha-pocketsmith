@@ -1,11 +1,14 @@
 """HA actions (services) for the PocketSmith integration."""
+import asyncio
 import logging
 
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.helpers.storage import Store
+from homeassistant.config_entries import ConfigEntryState
+from homeassistant.exceptions import ServiceValidationError
 
 from .backfill import async_trigger_backfill
-from .const import DOMAIN
+from .const import DOMAIN, BACKFILL_STATUS_RUNNING, CONF_ENABLE_BACKFILL, DEFAULT_ENABLE_BACKFILL
 from .repairs import clear_backfill_failed_issue
 
 _LOGGER = logging.getLogger(__name__)
@@ -17,27 +20,41 @@ _STORAGE_VERSION = 1
 def async_register_actions(hass: HomeAssistant) -> None:
     """Register all PocketSmith actions."""
 
+    reset_lock = asyncio.Lock()
+
+    def loaded_entries():
+        entries = hass.config_entries.async_entries(DOMAIN)
+        if not entries or any(entry.state is not ConfigEntryState.LOADED for entry in entries):
+            raise ServiceValidationError("PocketSmith must be configured and loaded before running this action")
+        return entries
+
     async def handle_refresh(call: ServiceCall) -> None:
         """Force an immediate coordinator refresh."""
-        for entry in hass.config_entries.async_entries(DOMAIN):
+        for entry in loaded_entries():
             coordinator = entry.runtime_data.coordinator
             await coordinator.async_request_refresh()
             _LOGGER.debug("PocketSmith manual refresh triggered")
 
     async def handle_reset_backfill(call: ServiceCall) -> None:
-        """Clear backfill progress so the next startup re-sweeps all accounts."""
-        store = Store(hass, _STORAGE_VERSION, _STORAGE_KEY)
-        await store.async_remove()
-        clear_backfill_failed_issue(hass)
-        _LOGGER.info("PocketSmith backfill progress reset — will re-sweep on next startup")
+        """Clear progress and immediately start a sweep, without concurrent resets."""
+        async with reset_lock:
+            entries = loaded_entries()
+            if any(entry.runtime_data.backfill.status == BACKFILL_STATUS_RUNNING for entry in entries):
+                raise ServiceValidationError("A PocketSmith backfill is already running")
+            if any(not entry.options.get(CONF_ENABLE_BACKFILL, DEFAULT_ENABLE_BACKFILL) for entry in entries):
+                raise ServiceValidationError("Enable historical backfill before resetting it")
+            store = Store(hass, _STORAGE_VERSION, _STORAGE_KEY)
+            await store.async_remove()
+            clear_backfill_failed_issue(hass)
+            _LOGGER.info("PocketSmith backfill progress reset — starting a new sweep")
 
-        for entry in hass.config_entries.async_entries(DOMAIN):
-            coordinator = entry.runtime_data.coordinator
-            await async_trigger_backfill(hass, coordinator, coordinator.data, entry, entry.runtime_data.backfill)
+            for entry in loaded_entries():
+                coordinator = entry.runtime_data.coordinator
+                await async_trigger_backfill(hass, coordinator, coordinator.data, entry, entry.runtime_data.backfill)
 
     async def handle_get_budget_summary(call: ServiceCall) -> ServiceResponse:
         """Return current budget summary as structured data."""
-        for entry in hass.config_entries.async_entries(DOMAIN):
+        for entry in loaded_entries():
             coordinator = entry.runtime_data.coordinator
             data = coordinator.data
             categories = data.get("enriched_categories", [])
@@ -72,10 +89,3 @@ def async_register_actions(hass: HomeAssistant) -> None:
         handle_get_budget_summary,
         supports_response=SupportsResponse.ONLY,
     )
-
-
-def async_unregister_actions(hass: HomeAssistant) -> None:
-    """Remove all PocketSmith actions."""
-    hass.services.async_remove(DOMAIN, "refresh")
-    hass.services.async_remove(DOMAIN, "reset_backfill")
-    hass.services.async_remove(DOMAIN, "get_budget_summary")

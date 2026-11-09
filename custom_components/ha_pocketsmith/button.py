@@ -6,13 +6,10 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .backfill import async_trigger_backfill
 from .const import DOMAIN
 from .coordinator import PocketSmithCoordinator
-from .repairs import clear_backfill_failed_issue
 from .sensor import _make_device_info
 
 _LOGGER = logging.getLogger(__name__)
@@ -65,12 +62,6 @@ class PocketSmithResetBackfillButton(CoordinatorEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Handle button press — clear backfill store and re-trigger."""
-        store = Store(self.hass, 1, "%s.backfill" % DOMAIN)
-        await store.async_remove()
-        clear_backfill_failed_issue(self.hass)
-        _LOGGER.info("PocketSmith backfill reset via button")
-
-        await async_trigger_backfill(
-            self.hass, self.coordinator, self.coordinator.data,
-            self._entry, self._entry.runtime_data.backfill,
+        await self.hass.services.async_call(
+            DOMAIN, "reset_backfill", {}, blocking=True
         )

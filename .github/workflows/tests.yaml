@@ -15,10 +15,10 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
 
       - name: Install test dependencies
         run: pip install -r requirements_test.txt
 
       - name: Run tests
-        run: pytest tests/ -v --tb=short
+        run: pytest tests/ -v --tb=short --cov=custom_components.ha_pocketsmith.config_flow --cov-branch --cov-report=term-missing --cov-fail-under=100

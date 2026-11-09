@@ -6,20 +6,20 @@ from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers import config_validation as cv
 
-from .actions import async_register_actions, async_unregister_actions
+from .actions import async_register_actions
 from .backfill import async_trigger_backfill
 from .const import (
-    CONF_UPDATE_INTERVAL_HOURS,
     DEFAULT_UPDATE_INTERVAL_HOURS,
     DOMAIN,
     BackfillState,
     PocketSmithData,
 )
 from .coordinator import PocketSmithCoordinator
+from .migration import async_migrate_entity_ids
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = ["sensor", "binary_sensor", "button", "number", "select"]
+PLATFORMS = ["sensor", "binary_sensor", "button", "select"]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
@@ -38,10 +38,10 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-def _update_interval_from_options(entry: ConfigEntry) -> timedelta:
-    """Return the polling interval from options, falling back to the default."""
-    hours = entry.options.get(CONF_UPDATE_INTERVAL_HOURS, DEFAULT_UPDATE_INTERVAL_HOURS)
-    return timedelta(hours=hours)
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+    """Register actions independently of config entry availability."""
+    async_register_actions(hass)
+    return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: PocketSmithConfigEntry) -> bool:
@@ -49,22 +49,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: PocketSmithConfigEntry) 
     coordinator = PocketSmithCoordinator(
         hass,
         developer_key=entry.data["developer_key"],
-        update_interval=_update_interval_from_options(entry),
+        update_interval=timedelta(hours=DEFAULT_UPDATE_INTERVAL_HOURS),
         entry=entry,
     )
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = PocketSmithData(coordinator=coordinator, backfill=BackfillState())
 
+    async_migrate_entity_ids(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     await async_trigger_backfill(hass, coordinator, coordinator.data, entry, entry.runtime_data.backfill)
-
-    async_register_actions(hass)
 
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: PocketSmithConfigEntry) -> bool:
     """Handle unloading of an entry."""
-    async_unregister_actions(hass)
     return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

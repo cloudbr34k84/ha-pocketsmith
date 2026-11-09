@@ -9,7 +9,6 @@ _LOGGER = logging.getLogger(__name__)
 
 API_BASE = "https://api.pocketsmith.com/v2"
 REQUEST_TIMEOUT = 30
-_MAX_RETRY_AFTER = 300
 
 
 def parse_link_next(link_header: str):
@@ -36,7 +35,7 @@ async def raise_for_api_error(response: aiohttp.ClientResponse, context: str) ->
     if response.status == 401:
         raise ConfigEntryAuthFailed("PocketSmith developer key is invalid or has been revoked")
     if response.status == 403:
-        raise UpdateFailed(
+        raise ConfigEntryAuthFailed(
             "PocketSmith access denied fetching %s — developer key lacks required permissions" % context
         )
     if response.status == 404:
@@ -48,15 +47,6 @@ async def raise_for_api_error(response: aiohttp.ClientResponse, context: str) ->
             "PocketSmith returned Method Not Allowed (HTTP 405) fetching %s — please report this bug" % context
         )
     if response.status == 429:
-        retry_after_raw = response.headers.get("Retry-After", "")
-        try:
-            retry_after = min(float(retry_after_raw), _MAX_RETRY_AFTER)
-        except (ValueError, TypeError):
-            retry_after = 60.0
-        _LOGGER.warning(
-            "PocketSmith rate limit hit fetching %s — retry after %ss",
-            context, retry_after,
-        )
         raise UpdateFailed(
             "PocketSmith API rate limit exceeded fetching %s — will retry on next update" % context
         )

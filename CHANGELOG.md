@@ -1,3 +1,34 @@
+## [v0.6.0] - Unreleased
+
+### Changed
+- Register integration actions at startup and validate that the entry is loaded.
+- Use hourly polling and retire the configurable polling number entity.
+- Replace title-based entity unique IDs with stable account/category IDs, migrating existing registry entries.
+- Require Home Assistant 2026.3 or later to use locally shipped brand assets.
+
+### Fixed
+- Treat revoked or permission-denied API keys as authentication failures and avoid duplicate failure logs.
+- Preserve currency preferences when saving options; prevent unsafe backfill resets.
+
+### Tests
+- Cover user, reauthentication, reconfiguration, options and error recovery; enforce 100% config-flow line and branch coverage.
+
+---
+
+## Unreleased — Bronze checklist
+
+- Register actions independently of entry setup and validate loaded entries.
+- Guard reset actions/buttons against disabled or already-running backfills.
+- Use immutable sensor unique IDs and migrate the entity registry in place.
+- Use password selectors and complete config-flow descriptions; preserve currency options.
+- Add config-flow recovery tests and a 100% line/branch coverage CI gate.
+- Classify rejected permissions as authentication failures without duplicate error logging.
+- Use hourly polling; retire the polling options field and number entity. Existing custom interval values are ignored. Previously registered polling number entities can be removed from the entity registry after reload.
+- Require HA 2026.3+, align installation/removal/action documentation and track the custom Bronze checklist.
+
+External recorder statistic IDs are unchanged by the entity-registry migration,
+so existing statistic series are not renamed or deleted by this update.
+
 # Changelog
 
 All notable changes to the PocketSmith Home Assistant integration are documented here.

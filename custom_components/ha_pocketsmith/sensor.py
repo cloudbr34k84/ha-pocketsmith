@@ -103,9 +103,6 @@ class PocketSmithSensor(CoordinatorEntity, SensorEntity):
         """Initialise the sensor."""
         super().__init__(coordinator)
         self._account_id = account["id"]
-        # Store slug at init so unique_id is stable if coordinator data is temporarily absent.
-        account_title = account.get("title", "Unnamed Account")
-        self._account_title_slug = account_title.replace(" ", "_").lower()
         self.entity_description = ACCOUNT_BALANCE_DESCRIPTION
         self._attr_device_info = _make_device_info(self.coordinator)
 
@@ -120,7 +117,7 @@ class PocketSmithSensor(CoordinatorEntity, SensorEntity):
     @property
     def unique_id(self) -> str:
         """Return a stable unique ID for this sensor."""
-        return "pocketsmith_%s_%s_balance" % (self._account_id, self._account_title_slug)
+        return "pocketsmith_%s_balance" % self._account_id
 
     @property
     def name(self) -> str:
@@ -250,7 +247,7 @@ class PocketSmithCategorySensor(CoordinatorEntity, SensorEntity):
     @property
     def unique_id(self) -> str:
         """Return a stable unique ID for this sensor."""
-        return "pocketsmith_category_%s_%s" % (self._category_id, self._category_slug)
+        return "pocketsmith_category_%s" % self._category_id
 
     @property
     def name(self) -> str:
@@ -342,7 +339,7 @@ class PocketSmithCategoryRollupSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def unique_id(self) -> str:
-        return "pocketsmith_rollup_%s_%s" % (self._category_id, self._category_slug)
+        return "pocketsmith_rollup_%s" % self._category_id
 
     @property
     def name(self) -> str:

@@ -21,7 +21,7 @@
 - Binary sensors that alert you when you are over budget or have uncategorised transactions
 - Historical backfill that populates long-term statistics graphs from your full transaction history
 - Backfill progress sensor so you can see sweep status on your dashboard
-- Configurable polling interval (1–24 hours) adjustable from the dashboard
+- Hourly polling suitable for financial summaries
 - Repair issues raised automatically for uncategorised transactions and failed backfills
 - Actions (services) for manual refresh, backfill reset, and budget summary queries
 - No YAML required — fully UI-configured
@@ -30,7 +30,7 @@
 
 ## Prerequisites
 
-- Home Assistant **2025.1** or later
+- Home Assistant **2026.3** or later
 - A PocketSmith account (any paid plan that provides API access)
 - A PocketSmith **developer API key** with read permissions for accounts, transactions, categories, and budget
 
@@ -83,8 +83,14 @@ Click the three-dot menu (⋮) on the PocketSmith integration card and select **
 
 | Option | Default | Description |
 |---|---|---|
-| Polling interval (hours) | 1 | How often to fetch data from PocketSmith. Lower values use more API quota. |
 | Enable historical backfill | On | Fetch your full transaction history on first setup to populate long-term statistics graphs. |
+
+### Polling
+
+Data refreshes once an hour. Financial summaries do not need second-by-second
+updates, and hourly polling limits API traffic. Previous custom interval options
+are ignored and the polling number entity is retired. Use the Refresh button or
+`ha_pocketsmith.refresh` action for an additional immediate update.
 
 ### Updating your API key
 
@@ -277,14 +283,6 @@ Shows the current state of the historical data sweep.
 
 ---
 
-### Number (Config category)
-
-| Entity | Description |
-|---|---|
-| `number.pocketsmith_polling_interval` | Polling interval in hours (1–24). Changes take effect immediately without a restart. |
-
----
-
 ### Select (Config category)
 
 | Entity | Description |
@@ -295,6 +293,8 @@ Shows the current state of the historical data sweep.
 
 ## Actions (Services)
 
+Actions remain registered even if entry setup fails or the entry is unloaded; running them requires a loaded PocketSmith entry. They accept no fields.
+
 All actions are available under **Developer Tools → Actions** or callable from automations.
 
 ### `ha_pocketsmith.refresh`
@@ -303,7 +303,7 @@ Force an immediate data refresh without waiting for the next scheduled poll.
 
 ### `ha_pocketsmith.reset_backfill`
 
-Clear the historical backfill progress marker. All accounts will be re-swept on the next startup. Use this if a backfill failed or you want to re-import statistics from scratch.
+Clear the historical backfill progress marker. A new sweep starts immediately. The action requires a loaded integration, enabled historical backfill, and no sweep already running. Use this if a backfill failed or you want to re-import statistics from scratch.
 
 ### `ha_pocketsmith.get_budget_summary`
 
@@ -371,7 +371,7 @@ The integration automatically raises repair issues in **Settings → System → 
 | Issue | Trigger | Resolution |
 |---|---|---|
 | Uncategorised transactions | `uncategorised_count > 0` | Categorise the transactions in PocketSmith |
-| Backfill failed | An account sweep exhausted all retries | Reset backfill via button or action and restart |
+| Backfill failed | An account sweep exhausted all retries | Reset backfill via button or action |
 
 > **Note:** Over-budget categories no longer raise a repair issue (it was not actionable mid-month). Use `binary_sensor.pocketsmith_over_budget` to build your own automations instead — see [Example Automations](#example-automations).
 
@@ -528,7 +528,7 @@ Check **Settings → System → Logs** for errors starting with `ha_pocketsmith`
 The backfill is rate-limited to be polite to the API. Accounts with thousands of transactions may take several minutes. Watch `sensor.pocketsmith_backfill_status` for progress.
 
 **Backfill stuck on `failed`**
-A repair issue will be raised. Press `button.pocketsmith_reset_backfill` and restart Home Assistant to retry.
+A repair issue will be raised. Enable historical backfill, then press `button.pocketsmith_reset_backfill` to retry immediately.
 
 **Duplicate sensors after reinstall**
 Go to **Settings → Devices & Services → Entities**, filter by `pocketsmith`, and delete stale entries before re-adding the integration.
@@ -545,7 +545,16 @@ Use the `select.pocketsmith_active_currency` entity to choose the correct curren
 3. Click the three-dot menu (⋮) and select **Delete**.
 4. Confirm the removal.
 
-All entities created by the integration are removed automatically.
+All entities created by the integration are removed automatically. Historical
+recorder statistics and the backfill progress marker are retained; entry deletion
+is not a history purge. If reinstalling and wanting a fresh sweep, enable backfill
+and call the reset action. To delete retained external statistics, use Home
+Assistant's statistics management tools. For a complete uninstall, remove the
+integration in HACS (or delete `custom_components/ha_pocketsmith` for a manual
+installation), then restart Home Assistant. Revoke the dedicated API key in
+PocketSmith when no other application needs it. The saved progress file
+`.storage/ha_pocketsmith.backfill` can be removed after stopping Home Assistant
+if you no longer want it; do not edit storage files while HA is running.
 
 ---
 

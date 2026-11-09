@@ -1,0 +1,79 @@
+# Internal custom/HACS checklist; not an official Home Assistant tier award.
+rules:
+  action-setup:
+    status: done
+    comment: >-
+      Actions are registered in async_setup and validate loaded entries before use.
+  appropriate-polling:
+    status: done
+    comment: >-
+      Hourly coordinator polling; no interval form or number control.
+  brands:
+    status: done
+    comment: >-
+      Custom integration scope: local PNG icons and logos on HA 2026.3+; not an official Core award.
+  common-modules:
+    status: done
+    comment: >-
+      Coordinator is in coordinator.py; no integration base entity class.
+  config-flow:
+    status: done
+    comment: >-
+      UI setup, password selectors, field descriptions, connection data and options separated.
+  config-flow-test-coverage:
+    status: done
+    comment: >-
+      User, duplicate, reauth, reconfigure, options and error recovery tests; CI requires 100% line and branch coverage.
+  docs-actions:
+    status: done
+    comment: >-
+      README and services describe all actions, fields, response and reset prerequisites.
+  docs-high-level-description:
+    status: done
+    comment: >-
+      README Overview describes and links PocketSmith.
+  docs-installation-instructions:
+    status: done
+    comment: >-
+      README has prerequisites and HACS/manual/UI instructions; minimum matches hacs.json.
+  docs-removal-instructions:
+    status: done
+    comment: >-
+      README documents entry removal, API key revocation, files and retained data.
+  entity-event-setup:
+    status: done
+    comment: >-
+      CoordinatorEntity handles listener subscription and removal.
+  entity-unique-id:
+    status: done
+    comment: >-
+      Immutable account/category IDs; existing registry entries migrate without changing entity_id.
+  has-entity-name:
+    status: done
+    comment: >-
+      Every entity sets has_entity_name.
+  runtime-data:
+    status: done
+    comment: >-
+      Typed config entry stores coordinator and backfill in runtime_data.
+  test-before-configure:
+    status: done
+    comment: >-
+      Real me request before entry creation; failures return actionable form errors.
+  test-before-setup:
+    status: done
+    comment: >-
+      First refresh gates setup; 401/403 require reauthentication, transient errors retry without duplicate logging.
+  unique-config-entry:
+    status: done
+    comment: >-
+      Fixed domain unique ID and duplicate abort enforce the single-entry design.
+  dependency-transparency:
+    status: exempt
+    comment: No additional Python requirements.
+  docs-conditions:
+    status: exempt
+    comment: No integration-specific conditions.
+  docs-triggers:
+    status: exempt
+    comment: No integration-specific triggers.
