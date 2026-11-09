@@ -55,6 +55,22 @@ async def test_background_failure_and_skips(hass):
         assert state.task is None
 
 
+async def test_backfill_with_no_historical_balance_rows(hass):
+    state = BackfillState()
+    data = {"user_id": 42, "accounts": [{"id": 1, "title": "Empty", "current_balance": 100}]}
+    with (
+        patch.object(backfill, "Store") as store,
+        patch.object(backfill, "_sweep_account", new_callable=AsyncMock, return_value=({}, {})),
+        patch.object(backfill, "async_add_external_statistics") as insert,
+        patch.object(backfill, "clear_backfill_failed_issue"),
+    ):
+        store.return_value.async_load = AsyncMock(return_value={})
+        store.return_value.async_save = AsyncMock()
+        await backfill._run_backfill_inner(hass, MagicMock(), data, state)
+    insert.assert_not_called()
+    assert state.status == "complete"
+
+
 async def test_sweep_filters_transactions(hass):
     rows = [{}, {"date": "invalid"}, {"date": "2026-01-01", "amount": -5, "category": {"id": 11}},
             {"transaction_date": "2026-01-01", "amount": 2, "category": {"id": 12, "is_transfer": True}},

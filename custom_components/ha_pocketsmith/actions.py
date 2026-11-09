@@ -74,38 +74,37 @@ def async_register_actions(hass: HomeAssistant) -> None:
 
     async def handle_get_budget_summary(call: ServiceCall) -> ServiceResponse:
         """Return current budget summary as structured data."""
-        for entry in loaded_entries():
-            try:
-                coordinator = entry.runtime_data.coordinator
-                data = coordinator.data
-                categories = data.get("enriched_categories", [])
-                over_budget = [c for c in categories if c.get("over_budget")]
-                return {
-                    "total_categories": len(categories),
-                    "over_budget_count": len(over_budget),
-                    "over_budget_categories": [
-                        {
-                            "category_title": c.get("category_title"),
-                            "parent_title": c.get("parent_title"),
-                            "budgeted": c.get("budgeted"),
-                            "actual": c.get("actual"),
-                            "over_by": c.get("over_by"),
-                            "percentage_used": c.get("percentage_used"),
-                        }
-                        for c in over_budget
-                    ],
-                    "uncategorised_count": data.get("uncategorised_count", 0),
-                    "net_worth": sum(
-                        acc.get("current_balance") or 0
-                        for acc in data.get("accounts", [])
-                    ),
-                }
-            except Exception as err:
-                _LOGGER.exception("PocketSmith budget summary action failed")
-                raise HomeAssistantError(
-                    translation_domain=DOMAIN, translation_key="budget_summary_failed"
-                ) from err
-        return {}
+        entry = loaded_entries()[0]
+        try:
+            coordinator = entry.runtime_data.coordinator
+            data = coordinator.data
+            categories = data.get("enriched_categories", [])
+            over_budget = [c for c in categories if c.get("over_budget")]
+            return {
+                "total_categories": len(categories),
+                "over_budget_count": len(over_budget),
+                "over_budget_categories": [
+                    {
+                        "category_title": c.get("category_title"),
+                        "parent_title": c.get("parent_title"),
+                        "budgeted": c.get("budgeted"),
+                        "actual": c.get("actual"),
+                        "over_by": c.get("over_by"),
+                        "percentage_used": c.get("percentage_used"),
+                    }
+                    for c in over_budget
+                ],
+                "uncategorised_count": data.get("uncategorised_count", 0),
+                "net_worth": sum(
+                    acc.get("current_balance") or 0
+                    for acc in data.get("accounts", [])
+                ),
+            }
+        except Exception as err:
+            _LOGGER.exception("PocketSmith budget summary action failed")
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="budget_summary_failed"
+            ) from err
 
     hass.services.async_register(DOMAIN, "refresh", handle_refresh)
     hass.services.async_register(DOMAIN, "reset_backfill", handle_reset_backfill)

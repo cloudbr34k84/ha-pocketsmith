@@ -49,7 +49,7 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
                     await _raise_for_api_error(response, context)
                     data = await response.json()
                     link = response.headers.get("Link", "")
-        return data, link
+                    return data, link
 
     async def _async_update_data(self) -> dict:
         """Fetch user, accounts, and uncategorised transaction count."""

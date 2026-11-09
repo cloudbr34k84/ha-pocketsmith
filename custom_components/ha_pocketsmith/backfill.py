@@ -298,19 +298,18 @@ async def _run_backfill_inner(hass: HomeAssistant, coordinator, data: dict, back
                 last_reset=month_reset,
             ))
 
-        if month_rows:
-            async_add_external_statistics(
-                hass,
-                {
-                    "has_sum": True,
-                    "name": display_name,
-                    "source": DOMAIN,
-                    "statistic_id": statistic_id,
-                    "unit_of_measurement": currency,
-                },
-                month_rows,
-            )
-            cat_rows_written += len(month_rows)
+        async_add_external_statistics(
+            hass,
+            {
+                "has_sum": True,
+                "name": display_name,
+                "source": DOMAIN,
+                "statistic_id": statistic_id,
+                "unit_of_measurement": currency,
+            },
+            month_rows,
+        )
+        cat_rows_written += len(month_rows)
 
     _LOGGER.info("Backfill: inserted %d category-month spend rows across %d categories",
                  cat_rows_written, len(cats_seen))
@@ -505,10 +504,11 @@ def _reconstruct_net_worth_rows(
         return []
 
     earliest = min(
-        min(nets.keys())
-        for nets in account_daily_nets.values()
-        if nets
+        (min(nets) for nets in account_daily_nets.values() if nets),
+        default=None,
     )
+    if earliest is None:
+        return []
 
     rows: list[StatisticData] = []
     # Per-account running balance starting from current.

@@ -7,6 +7,11 @@ from homeassistant.util import dt as dt_util
 from custom_components.ha_pocketsmith import binary_sensor, button, select, sensor
 
 
+async def test_legacy_yaml_warning(hass, caplog):
+    await sensor.async_setup_platform(hass, {}, MagicMock())
+    assert "YAML configuration is no longer supported" in caplog.text
+
+
 async def test_platform_entities(hass, mock_entry):
     coordinator = mock_entry.runtime_data.coordinator
     coordinator.data = {"user_id": 42, "user": {"id": 42, "name": "Brad"},
@@ -42,6 +47,17 @@ async def test_platform_entities(hass, mock_entry):
     assert rollup.translation_placeholders == {"category": "Household"}
     assert "name" not in account.__dict__
     assert "name" not in rollup.__dict__
+    coordinator.data["accounts"].insert(0, {"id": 999})
+    assert account.native_value == 12
+    with patch("homeassistant.helpers.update_coordinator.CoordinatorEntity._handle_coordinator_update"):
+        coordinator.data["enriched_categories"] = [{"category_id": 999}]
+        rollup._handle_coordinator_update()
+        coordinator.data["enriched_categories"] = []
+        rollup._handle_coordinator_update()
+    assert rollup.translation_placeholders == {"category": "Household"}
+    coordinator.data["enriched_categories"] = [{"category_id": 10, "category_title": "Household"},
+                                                {"category_id": 11, "parent_id": 10, "actual": 5, "budgeted": 2, "over_budget": True}]
+    coordinator.data["accounts"].pop(0)
     assert rollup.native_unit_of_measurement == "AUD"
     currency = next(e for e in entities if isinstance(e, select.PocketSmithActiveCurrencySelect))
     assert currency.options == ["AUD"]
@@ -65,6 +81,9 @@ async def test_platform_entities(hass, mock_entry):
     coordinator.data["enriched_categories"] = []
     coordinator.data["uncategorised_count"] = 0
     coordinator.data["user"] = {}
+    mock_entry.options = {}
+    net_worth = next(e for e in entities if isinstance(e, sensor.PocketSmithNetWorthSensor))
+    assert net_worth.native_unit_of_measurement == "AUD"
     assert currency.options == ["AUD"]
     assert currency.current_option == "AUD"
     assert rollup.native_value == 0

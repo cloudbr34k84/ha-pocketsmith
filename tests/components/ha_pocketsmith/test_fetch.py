@@ -43,6 +43,29 @@ async def test_all_fetchers(coordinator):
         assert await coordinator._fetch_monthly_events(MagicMock(), 42) == {10: 5}
 
 
+@pytest.mark.parametrize("fetcher,expected", [
+    ("_fetch_uncategorised_count", 1),
+    ("_fetch_monthly_transactions", ({10: 5}, {10: 1})),
+    ("_fetch_monthly_events", {10: 5}),
+])
+async def test_last_nonempty_page_without_next_link(coordinator, fetcher, expected):
+    transaction = {"category": None} if fetcher == "_fetch_uncategorised_count" else {"category": {"id": 10}, "amount": -5}
+    with patch.object(coordinator, "_get", new_callable=AsyncMock, return_value=([transaction], "")) as get:
+        assert await getattr(coordinator, fetcher)(MagicMock(), 42) == expected
+        assert get.await_count == 1
+
+
+@pytest.mark.parametrize("stage", ["enter", "body", "exit"])
+async def test_get_propagates_request_errors(coordinator, stage):
+    response = MagicMock(status=200, headers={})
+    response.json = AsyncMock(return_value=[], side_effect=aiohttp.ClientError("body") if stage == "body" else None)
+    session = MagicMock()
+    session.get.return_value.__aenter__ = AsyncMock(return_value=response, side_effect=aiohttp.ClientError("enter") if stage == "enter" else None)
+    session.get.return_value.__aexit__ = AsyncMock(return_value=False, side_effect=aiohttp.ClientError("exit") if stage == "exit" else None)
+    with pytest.raises(aiohttp.ClientError, match=stage):
+        await coordinator._get(session, "url", "accounts")
+
+
 @pytest.mark.parametrize("failure", [None, aiohttp.ClientError(), TimeoutError()])
 async def test_refresh_result_and_failures(coordinator, failure):
     with (

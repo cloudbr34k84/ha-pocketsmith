@@ -9,6 +9,7 @@
 - Require Home Assistant 2026.3 or later to use locally shipped brand assets.
 
 ### Fixed
+- Handle accounts without historical transactions without failing net-worth reconstruction.
 - Keep failed historical backfills incomplete so affected accounts can be retried; clear the repair after a successful sweep.
 - Translate service action validation errors.
 - Report failed coordinator refreshes through the refresh action and button.
@@ -18,6 +19,7 @@
 - Preserve currency preferences when saving options; prevent unsafe backfill resets.
 
 ### Tests
+- Require 100% line and branch coverage for every integration module.
 - Enforce greater than 95% line/branch coverage in every integration module and retain 100% config-flow coverage.
 - Add regression coverage for refresh failures, unload cancellation, outage recovery, API pagination, historical imports, entities, diagnostics, repairs, statistics, and system health.
 - Cover user, reauthentication, reconfiguration, options and error recovery; enforce 100% config-flow line and branch coverage.

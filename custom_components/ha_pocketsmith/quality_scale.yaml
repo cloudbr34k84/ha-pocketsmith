@@ -103,7 +103,7 @@ rules:
   test-coverage:
     status: done
     comment: >-
-      Full line/branch coverage exceeds 95% in every module; CI verifies each module and requires 100% config-flow coverage.
+      CI requires 100% line and branch coverage for every integration module.
   unique-config-entry:
     status: done
     comment: >-
