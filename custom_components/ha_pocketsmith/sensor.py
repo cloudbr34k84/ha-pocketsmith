@@ -14,6 +14,7 @@ from .const import BACKFILL_STATUS_IDLE, CONF_ACTIVE_CURRENCY, DEFAULT_CURRENCY,
 from .coordinator import PocketSmithCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+PARALLEL_UPDATES = 0
 
 
 def _make_device_info(coordinator) -> DeviceInfo:

@@ -14,6 +14,7 @@ from .coordinator import PocketSmithCoordinator
 from .sensor import _make_device_info
 
 _LOGGER = logging.getLogger(__name__)
+PARALLEL_UPDATES = 0
 
 
 async def async_setup_entry(

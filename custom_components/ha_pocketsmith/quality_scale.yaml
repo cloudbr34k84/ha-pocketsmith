@@ -1,5 +1,13 @@
 # Internal custom/HACS checklist; not an official Home Assistant tier award.
 rules:
+  action-exceptions:
+    status: done
+    comment: >-
+      Service actions validate state and raise Home Assistant exceptions for operational failures.
+  config-entry-unloading:
+    status: done
+    comment: >-
+      async_unload_entry unloads all forwarded platforms.
   action-setup:
     status: done
     comment: >-
@@ -20,6 +28,14 @@ rules:
     status: done
     comment: >-
       UI setup, password selectors, field descriptions, connection data and options separated.
+  docs-configuration-parameters:
+    status: done
+    comment: >-
+      README documents the historical backfill option and default.
+  docs-installation-parameters:
+    status: done
+    comment: >-
+      README documents the developer API key and required permissions.
   config-flow-test-coverage:
     status: done
     comment: >-
@@ -48,10 +64,30 @@ rules:
     status: done
     comment: >-
       Immutable account/category IDs; existing registry entries migrate without changing entity_id.
+  entity-unavailable:
+    status: done
+    comment: >-
+      CoordinatorEntity propagates coordinator failures to entity availability.
   has-entity-name:
     status: done
     comment: >-
       Every entity sets has_entity_name.
+  integration-owner:
+    status: done
+    comment: >-
+      manifest.json declares the integration owner.
+  log-when-unavailable:
+    status: done
+    comment: >-
+      DataUpdateCoordinator logs unavailable and recovery transitions once.
+  parallel-updates:
+    status: done
+    comment: >-
+      Every entity platform explicitly sets PARALLEL_UPDATES = 0.
+  reauthentication-flow:
+    status: done
+    comment: >-
+      The UI reauthentication flow validates and replaces revoked API keys.
   runtime-data:
     status: done
     comment: >-
@@ -64,6 +100,10 @@ rules:
     status: done
     comment: >-
       First refresh gates setup; 401/403 require reauthentication, transient errors retry without duplicate logging.
+  test-coverage:
+    status: done
+    comment: >-
+      CI measures the complete integration package with a 95% minimum threshold.
   unique-config-entry:
     status: done
     comment: >-

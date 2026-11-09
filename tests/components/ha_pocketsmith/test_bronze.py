@@ -100,6 +100,12 @@ async def test_reset_preconditions_before_storage_mutation(hass, state):
             trigger.assert_not_called()
 
 
+def test_entity_platforms_declare_parallel_updates():
+    from custom_components.ha_pocketsmith import binary_sensor, button, select, sensor
+
+    assert all(module.PARALLEL_UPDATES == 0 for module in (binary_sensor, button, select, sensor))
+
+
 @pytest.mark.parametrize("failure", ["connection", "timeout", "auth", "permissions"])
 async def test_setup_failure_classification(hass, failure):
     import aiohttp
