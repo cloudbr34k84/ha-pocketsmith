@@ -7,4 +7,5 @@ ha_dev_checklist.md
 
 .coverage
 htmlcov/
+coverage.json
 .pytest_cache/

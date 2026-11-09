@@ -85,11 +85,13 @@ async def async_trigger_backfill(
     if backfill_state.status == BACKFILL_STATUS_RUNNING:
         return
     backfill_state.status = BACKFILL_STATUS_RUNNING
-    hass.async_create_task(
+    task = hass.async_create_task(
         _run_backfill(hass, coordinator, data, backfill_state),
         name="pocketsmith_backfill",
         eager_start=False,
     )
+    backfill_state.task = task
+    entry.async_on_unload(task.cancel)
 
 
 async def _run_backfill(hass: HomeAssistant, coordinator, data: dict, backfill_state: BackfillState) -> None:
@@ -382,17 +384,24 @@ async def _fetch_page_with_retry(
     context: str,
 ) -> tuple[list | None, str, bool]:
     """Fetch one page with retry on 429/5xx. Returns (data, link_header, had_error)."""
+    def connection_state(unavailable: bool) -> None:
+        previous = getattr(coordinator, "_backfill_unavailable", False) is True
+        if unavailable != previous:
+            _LOGGER.info("PocketSmith historical API %s", "unavailable" if unavailable else "reconnected")
+        coordinator._backfill_unavailable = unavailable
+
     for attempt in range(1, _MAX_RETRIES + 1):
         try:
             async with asyncio.timeout(15):
                 async with session.get(url, headers=coordinator._headers) as resp:
                     if resp.status == 429:
+                        connection_state(True)
                         retry_after_raw = resp.headers.get("Retry-After", "60")
                         try:
                             wait = min(float(retry_after_raw), 300)
                         except ValueError:
                             wait = 60.0
-                        _LOGGER.warning(
+                        _LOGGER.debug(
                             "Backfill rate limited on %s — waiting %.0fs (attempt %d/%d)",
                             context, wait, attempt, _MAX_RETRIES,
                         )
@@ -400,8 +409,9 @@ async def _fetch_page_with_retry(
                         continue
 
                     if resp.status >= 500:
+                        connection_state(True)
                         wait = min(30 * attempt, 300)
-                        _LOGGER.warning(
+                        _LOGGER.debug(
                             "Backfill server error %s on %s — waiting %.0fs (attempt %d/%d)",
                             resp.status, context, wait, attempt, _MAX_RETRIES,
                         )
@@ -410,6 +420,7 @@ async def _fetch_page_with_retry(
 
                     await raise_for_api_error(resp, "backfill %s" % context)
                     data = await resp.json()
+                    connection_state(False)
                     link = resp.headers.get("Link", "")
                     return data, link, False
 
@@ -429,14 +440,15 @@ async def _fetch_page_with_retry(
             return None, "", True
 
         except (asyncio.TimeoutError, aiohttp.ClientError) as err:
+            connection_state(True)
             wait = min(10 * attempt, 60)
-            _LOGGER.warning(
+            _LOGGER.debug(
                 "Backfill network error on %s: %s — waiting %.0fs (attempt %d/%d)",
                 context, err, wait, attempt, _MAX_RETRIES,
             )
             await asyncio.sleep(wait)
 
-    _LOGGER.error(
+    _LOGGER.debug(
         "Backfill gave up on %s after %d attempts — partial data may be missing from statistics",
         context, _MAX_RETRIES,
     )

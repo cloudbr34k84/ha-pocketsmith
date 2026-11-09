@@ -1,5 +1,6 @@
 """PocketSmith Integration."""
 import logging
+import asyncio
 from datetime import timedelta
 
 from homeassistant.core import HomeAssistant
@@ -65,4 +66,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: PocketSmithConfigEntry) 
 
 async def async_unload_entry(hass: HomeAssistant, entry: PocketSmithConfigEntry) -> bool:
     """Handle unloading of an entry."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if not await hass.config_entries.async_unload_platforms(entry, PLATFORMS):
+        return False
+    task = entry.runtime_data.backfill.task
+    if isinstance(task, asyncio.Task) and not task.done():
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+    return True

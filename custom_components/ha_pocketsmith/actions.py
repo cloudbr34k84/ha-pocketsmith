@@ -34,6 +34,8 @@ def async_register_actions(hass: HomeAssistant) -> None:
             coordinator = entry.runtime_data.coordinator
             try:
                 await coordinator.async_request_refresh()
+                if not coordinator.last_update_success:
+                    raise HomeAssistantError("PocketSmith refresh failed") from coordinator.last_exception
             except Exception as err:
                 _LOGGER.exception("PocketSmith refresh action failed")
                 raise HomeAssistantError(

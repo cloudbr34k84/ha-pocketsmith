@@ -43,7 +43,7 @@ class PocketSmithRefreshButton(CoordinatorEntity, ButtonEntity):
 
     async def async_press(self) -> None:
         """Handle button press — request coordinator refresh."""
-        await self.coordinator.async_request_refresh()
+        await self.hass.services.async_call(DOMAIN, "refresh", {}, blocking=True)
 
 
 class PocketSmithResetBackfillButton(CoordinatorEntity, ButtonEntity):

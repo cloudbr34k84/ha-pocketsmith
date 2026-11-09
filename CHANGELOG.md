@@ -7,10 +7,15 @@
 - Require Home Assistant 2026.3 or later to use locally shipped brand assets.
 
 ### Fixed
+- Report failed coordinator refreshes through the refresh action and button.
+- Cancel and await historical backfill when unloading an integration entry.
+- Log backfill API outages and recovery once per transition, with retry details at debug level.
 - Treat revoked or permission-denied API keys as authentication failures and avoid duplicate failure logs.
 - Preserve currency preferences when saving options; prevent unsafe backfill resets.
 
 ### Tests
+- Enforce greater than 95% line/branch coverage in every integration module and retain 100% config-flow coverage.
+- Add regression coverage for refresh failures, unload cancellation, outage recovery, API pagination, historical imports, entities, diagnostics, repairs, statistics, and system health.
 - Cover user, reauthentication, reconfiguration, options and error recovery; enforce 100% config-flow line and branch coverage.
 
 ---

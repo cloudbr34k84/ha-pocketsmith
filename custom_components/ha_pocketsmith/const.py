@@ -1,5 +1,6 @@
 """Constants for the PocketSmith integration."""
 from dataclasses import dataclass, field
+from asyncio import Task
 
 DOMAIN = "ha_pocketsmith"
 
@@ -24,6 +25,7 @@ class BackfillState:
     accounts_total: int = 0
     accounts_remaining: int = 0
     current_account: str | None = None
+    task: Task | None = field(default=None, repr=False)
 
 
 @dataclass

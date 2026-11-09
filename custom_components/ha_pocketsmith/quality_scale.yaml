@@ -3,11 +3,11 @@ rules:
   action-exceptions:
     status: done
     comment: >-
-      Service actions validate state and raise Home Assistant exceptions for operational failures.
+      Actions validate state and check coordinator refresh success; buttons use the same service handlers.
   config-entry-unloading:
     status: done
     comment: >-
-      async_unload_entry unloads all forwarded platforms.
+      Unloads platforms, cancels and awaits historical backfill; coordinator handles its own shutdown.
   action-setup:
     status: done
     comment: >-
@@ -79,7 +79,7 @@ rules:
   log-when-unavailable:
     status: done
     comment: >-
-      DataUpdateCoordinator logs unavailable and recovery transitions once.
+      Coordinator handles polling transitions; backfill logs outage/recovery once and retry details at debug level.
   parallel-updates:
     status: done
     comment: >-
@@ -103,7 +103,7 @@ rules:
   test-coverage:
     status: done
     comment: >-
-      CI measures the complete integration package with a 95% minimum threshold.
+      Full line/branch coverage exceeds 95% in every module; CI verifies each module and requires 100% config-flow coverage.
   unique-config-entry:
     status: done
     comment: >-
