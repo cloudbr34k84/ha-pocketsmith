@@ -34,7 +34,6 @@ class PocketSmithRefreshButton(CoordinatorEntity, ButtonEntity):
 
     _attr_has_entity_name = True
     _attr_translation_key = "refresh"
-    _attr_icon = "mdi:refresh"
     _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, coordinator: PocketSmithCoordinator) -> None:
@@ -52,7 +51,6 @@ class PocketSmithResetBackfillButton(CoordinatorEntity, ButtonEntity):
 
     _attr_has_entity_name = True
     _attr_translation_key = "reset_backfill"
-    _attr_icon = "mdi:history"
     _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, coordinator: PocketSmithCoordinator, entry: ConfigEntry) -> None:
