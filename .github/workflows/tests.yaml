@@ -25,3 +25,6 @@ jobs:
 
       - name: Enforce coverage for every integration module
         run: python script/check_coverage.py
+
+      - name: Check strict typing
+        run: mypy

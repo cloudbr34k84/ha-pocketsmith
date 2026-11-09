@@ -1,6 +1,7 @@
 ## [v0.6.0] - Unreleased
 
 ### Changed
+- Enable strict mypy checks for every integration module and type the config-entry runtime data.
 - Move entity icons and dynamic account and rollup names to Home Assistant translations. Category spend sensors now use a fixed icon; over-budget state remains available as an attribute and binary sensor.
 - Limit diagnostics to allowlisted options and aggregate counts, excluding user profiles, identifiers, names and financial amounts.
 - Register integration actions at startup and validate that the entry is loaded.
@@ -9,6 +10,8 @@
 - Require Home Assistant 2026.3 or later to use locally shipped brand assets.
 
 ### Fixed
+- Reject replacement API keys belonging to another PocketSmith user; recover existing users' identities from their registered service devices.
+- Supply the required mean type and unit class in recorder statistic metadata on Home Assistant 2026.3 and later.
 - Handle accounts without historical transactions without failing net-worth reconstruction.
 - Keep failed historical backfills incomplete so affected accounts can be retried; clear the repair after a successful sweep.
 - Translate service action validation errors.

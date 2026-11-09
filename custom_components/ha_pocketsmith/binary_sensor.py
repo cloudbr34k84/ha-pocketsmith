@@ -1,15 +1,16 @@
 """PocketSmith binary sensor platform."""
 import logging
+from datetime import datetime
+from typing import Any, cast
 
-from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity  # type: ignore[attr-defined,unused-ignore]  # HA 2026.3 defines this here; newer releases re-export it.
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
-from .const import DOMAIN
+from .const import DOMAIN, PocketSmithConfigEntry
 from .coordinator import PocketSmithCoordinator
 from .sensor import _make_device_info
 
@@ -19,7 +20,7 @@ PARALLEL_UPDATES = 0
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: PocketSmithConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up PocketSmith binary sensors from a config entry."""
@@ -32,7 +33,7 @@ async def async_setup_entry(
     ])
 
 
-class PocketSmithOverBudgetBinarySensor(CoordinatorEntity, BinarySensorEntity):
+class PocketSmithOverBudgetBinarySensor(CoordinatorEntity[PocketSmithCoordinator], BinarySensorEntity):
     """Binary sensor that is on when any non-transfer category is over budget."""
 
     _attr_has_entity_name = True
@@ -47,7 +48,7 @@ class PocketSmithOverBudgetBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self._attr_device_info = _make_device_info(coordinator)
 
     @property
-    def _over_budget_packages(self) -> list:
+    def _over_budget_packages(self) -> list[dict[str, Any]]:
         """Return details of categories that are over budget this month."""
         return [
             {
@@ -68,7 +69,7 @@ class PocketSmithOverBudgetBinarySensor(CoordinatorEntity, BinarySensorEntity):
         return len(self._over_budget_packages) > 0
 
     @property
-    def extra_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return details of over-budget categories."""
         over_budget = self._over_budget_packages
         return {
@@ -77,7 +78,7 @@ class PocketSmithOverBudgetBinarySensor(CoordinatorEntity, BinarySensorEntity):
         }
 
 
-class PocketSmithForecastNeedsRecalculateBinarySensor(CoordinatorEntity, BinarySensorEntity):
+class PocketSmithForecastNeedsRecalculateBinarySensor(CoordinatorEntity[PocketSmithCoordinator], BinarySensorEntity):
     """Binary sensor that is on when the forecast is stale or missing."""
 
     _attr_has_entity_name = True
@@ -95,13 +96,13 @@ class PocketSmithForecastNeedsRecalculateBinarySensor(CoordinatorEntity, BinaryS
     @property
     def is_on(self) -> bool:
         """Return True if forecast_last_updated is missing or older than 24 hours."""
-        last_updated = self.coordinator.data.get("forecast_last_updated")
+        last_updated = cast(datetime | None, self.coordinator.data.get("forecast_last_updated"))
         if last_updated is None:
             return True
         return (dt_util.utcnow() - last_updated).total_seconds() > 86400
 
 
-class PocketSmithHasUncategorisedBinarySensor(CoordinatorEntity, BinarySensorEntity):
+class PocketSmithHasUncategorisedBinarySensor(CoordinatorEntity[PocketSmithCoordinator], BinarySensorEntity):
     """Binary sensor that is on when there are uncategorised transactions."""
 
     _attr_has_entity_name = True
@@ -118,9 +119,9 @@ class PocketSmithHasUncategorisedBinarySensor(CoordinatorEntity, BinarySensorEnt
     @property
     def is_on(self) -> bool:
         """Return True if there are uncategorised transactions."""
-        return self.coordinator.data.get("uncategorised_count", 0) > 0
+        return cast(int, self.coordinator.data.get("uncategorised_count", 0)) > 0
 
     @property
-    def extra_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the uncategorised transaction count."""
         return {"uncategorised_count": self.coordinator.data.get("uncategorised_count", 0)}

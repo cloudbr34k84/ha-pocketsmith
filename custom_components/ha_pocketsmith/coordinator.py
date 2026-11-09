@@ -4,6 +4,8 @@ import calendar
 import logging
 import time
 from datetime import date
+from datetime import timedelta
+from typing import Any, cast
 
 import aiohttp
 from homeassistant.config_entries import ConfigEntry
@@ -20,10 +22,10 @@ from .statistics import async_insert_statistics
 _LOGGER = logging.getLogger(__name__)
 
 
-class PocketSmithCoordinator(DataUpdateCoordinator):
+class PocketSmithCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Fetch all PocketSmith data in a single coordinated update."""
 
-    def __init__(self, hass: HomeAssistant, developer_key: str, update_interval, entry: ConfigEntry) -> None:
+    def __init__(self, hass: HomeAssistant, developer_key: str, update_interval: timedelta, entry: ConfigEntry) -> None:
         """Initialise the coordinator."""
         super().__init__(
             hass,
@@ -40,8 +42,9 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
         }
         # Limit to one in-flight request at a time to avoid burst rate limiting.
         self._request_semaphore = asyncio.Semaphore(1)
+        self._backfill_unavailable = False
 
-    async def _get(self, session: aiohttp.ClientSession, url: str, context: str):
+    async def _get(self, session: aiohttp.ClientSession, url: str, context: str) -> tuple[Any, str]:
         """Make a rate-limited GET request and return the parsed JSON response and Link header."""
         async with self._request_semaphore:
             async with asyncio.timeout(_REQUEST_TIMEOUT):
@@ -51,7 +54,7 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
                     link = response.headers.get("Link", "")
                     return data, link
 
-    async def _async_update_data(self) -> dict:
+    async def _async_update_data(self) -> dict[str, Any]:
         """Fetch user, accounts, and uncategorised transaction count."""
         session = async_get_clientsession(self.hass)
         _LOGGER.debug("PocketSmith data refresh starting")
@@ -104,7 +107,7 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
 
         return result
 
-    async def _fetch_user_id(self, session: aiohttp.ClientSession) -> int:
+    async def _fetch_user_id(self, session: aiohttp.ClientSession) -> tuple[int, dict[str, Any]]:
         """Return the authenticated user's ID."""
         url = "%s/me" % _API_BASE
         data, _ = await self._get(session, url, "user profile")
@@ -119,18 +122,18 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
         _LOGGER.debug("Fetched user ID: %s", user_id)
         return user_id, data
 
-    async def _fetch_accounts(self, session: aiohttp.ClientSession, user_id: int) -> list:
+    async def _fetch_accounts(self, session: aiohttp.ClientSession, user_id: int) -> list[dict[str, Any]]:
         """Return all accounts for the given user."""
         url = "%s/users/%s/accounts" % (_API_BASE, user_id)
         accounts, _ = await self._get(session, url, "accounts")
         _LOGGER.debug("Fetched %s accounts for user %s", len(accounts), user_id)
-        return accounts
+        return cast(list[dict[str, Any]], accounts)
 
     async def _fetch_uncategorised_count(self, session: aiohttp.ClientSession, user_id: int) -> int:
         """Return the count of transactions with no category across all pages."""
         base_url = "%s/users/%s/transactions" % (_API_BASE, user_id)
         count = 0
-        url = "%s?uncategorised=1&per_page=1000" % base_url
+        url: str | None = "%s?uncategorised=1&per_page=1000" % base_url
 
         while url:
             transactions, link = await self._get(session, url, "uncategorised transactions")
@@ -143,9 +146,9 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
         _LOGGER.debug("Total uncategorised transactions for user %s: %s", user_id, count)
         return count
 
-    async def _fetch_categories(self, session: aiohttp.ClientSession, user_id: int) -> list:
+    async def _fetch_categories(self, session: aiohttp.ClientSession, user_id: int) -> list[dict[str, Any]]:
         """Return all categories for the given user."""
-        url = "%s/users/%s/categories?per_page=1000" % (_API_BASE, user_id)
+        url: str | None = "%s/users/%s/categories?per_page=1000" % (_API_BASE, user_id)
         categories = []
 
         while url:
@@ -156,9 +159,9 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
         _LOGGER.debug("Fetched %s categories for user %s", len(categories), user_id)
         return categories
 
-    async def _fetch_budget(self, session: aiohttp.ClientSession, user_id: int) -> list:
+    async def _fetch_budget(self, session: aiohttp.ClientSession, user_id: int) -> list[dict[str, Any]]:
         """Return budget data for the given user."""
-        url = "%s/users/%s/budget?per_page=1000" % (_API_BASE, user_id)
+        url: str | None = "%s/users/%s/budget?per_page=1000" % (_API_BASE, user_id)
         budget = []
 
         while url:
@@ -169,7 +172,7 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
         _LOGGER.debug("Fetched budget for user %s", user_id)
         return budget
 
-    async def _fetch_monthly_transactions(self, session: aiohttp.ClientSession, user_id: int) -> tuple[dict, dict]:
+    async def _fetch_monthly_transactions(self, session: aiohttp.ClientSession, user_id: int) -> tuple[dict[int, float], dict[int, int]]:
         """Return actual spend totals and transaction counts grouped by category ID for the current month."""
         today = dt_util.now().date()
         start_date = date(today.year, today.month, 1).isoformat()
@@ -182,7 +185,7 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
         )
 
         base_url = "%s/users/%s/transactions" % (_API_BASE, user_id)
-        url = "%s?start_date=%s&end_date=%s&per_page=1000" % (base_url, start_date, end_date)
+        url: str | None = "%s?start_date=%s&end_date=%s&per_page=1000" % (base_url, start_date, end_date)
         totals: dict[int, float] = {}
         counts: dict[int, int] = {}
         transaction_count = 0
@@ -210,7 +213,7 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
         )
         return totals, counts
 
-    async def _fetch_monthly_events(self, session: aiohttp.ClientSession, user_id: int) -> dict:
+    async def _fetch_monthly_events(self, session: aiohttp.ClientSession, user_id: int) -> dict[int, float]:
         """Return budgeted amount totals grouped by category ID for the current month."""
         today = dt_util.now().date()
         start_date = date(today.year, today.month, 1).isoformat()
@@ -222,7 +225,7 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
             user_id, start_date, end_date,
         )
 
-        url = "%s/users/%s/events?start_date=%s&end_date=%s&per_page=1000" % (_API_BASE, user_id, start_date, end_date)
+        url: str | None = "%s/users/%s/events?start_date=%s&end_date=%s&per_page=1000" % (_API_BASE, user_id, start_date, end_date)
 
         totals: dict[int, float] = {}
         event_count = 0
@@ -249,7 +252,7 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
         )
         return totals
 
-    def _build_enriched_categories(self, categories: list, budget: list, monthly_transactions: dict, monthly_events: dict, monthly_transaction_counts: dict) -> list:
+    def _build_enriched_categories(self, categories: list[dict[str, Any]], budget: list[dict[str, Any]], monthly_transactions: dict[int, float], monthly_events: dict[int, float], monthly_transaction_counts: dict[int, int]) -> list[dict[str, Any]]:
         """Return a flat enriched list of all categories with monthly budget data.
 
         For each non-transfer category:
@@ -259,12 +262,12 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
         - budgeted (bill categories): sourced from monthly_events (sum of scheduled events this calendar month)
         """
 
-        def _flatten(cats, flat):
+        def _flatten(cats: list[dict[str, Any]], flat: dict[int, dict[str, Any]]) -> None:
             for cat in cats:
                 flat[cat["id"]] = cat
                 _flatten(cat.get("children") or [], flat)
 
-        flat_cats = {}
+        flat_cats: dict[int, dict[str, Any]] = {}
         _flatten(categories, flat_cats)
 
         def _category_level(cat_id: int) -> int:
@@ -278,7 +281,7 @@ class PocketSmithCoordinator(DataUpdateCoordinator):
                 current = parent
             return level
 
-        budget_by_category = {}
+        budget_by_category: dict[int, list[dict[str, Any]]] = {}
         for pkg in budget:
             if not isinstance(pkg, dict):
                 continue

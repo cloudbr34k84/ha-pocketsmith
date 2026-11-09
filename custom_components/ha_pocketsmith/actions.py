@@ -1,6 +1,7 @@
 """HA actions (services) for the PocketSmith integration."""
 import asyncio
 import logging
+from typing import Any, cast
 
 from homeassistant.core import HomeAssistant, ServiceCall, ServiceResponse, SupportsResponse
 from homeassistant.helpers.storage import Store
@@ -8,7 +9,7 @@ from homeassistant.config_entries import ConfigEntryState
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 
 from .backfill import async_trigger_backfill
-from .const import DOMAIN, BACKFILL_STATUS_RUNNING, CONF_ENABLE_BACKFILL, DEFAULT_ENABLE_BACKFILL
+from .const import DOMAIN, BACKFILL_STATUS_RUNNING, CONF_ENABLE_BACKFILL, DEFAULT_ENABLE_BACKFILL, PocketSmithConfigEntry
 from .repairs import clear_backfill_failed_issue
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,11 +23,11 @@ def async_register_actions(hass: HomeAssistant) -> None:
 
     reset_lock = asyncio.Lock()
 
-    def loaded_entries():
+    def loaded_entries() -> list[PocketSmithConfigEntry]:
         entries = hass.config_entries.async_entries(DOMAIN)
         if not entries or any(entry.state is not ConfigEntryState.LOADED for entry in entries):
             raise ServiceValidationError(translation_domain=DOMAIN, translation_key="entry_not_loaded")
-        return entries
+        return cast(list[PocketSmithConfigEntry], entries)
 
     async def handle_refresh(call: ServiceCall) -> None:
         """Force an immediate coordinator refresh."""
@@ -51,7 +52,7 @@ def async_register_actions(hass: HomeAssistant) -> None:
                 raise ServiceValidationError(translation_domain=DOMAIN, translation_key="backfill_running")
             if any(not entry.options.get(CONF_ENABLE_BACKFILL, DEFAULT_ENABLE_BACKFILL) for entry in entries):
                 raise ServiceValidationError(translation_domain=DOMAIN, translation_key="backfill_disabled")
-            store = Store(hass, _STORAGE_VERSION, _STORAGE_KEY)
+            store: Store[dict[str, Any]] = Store(hass, _STORAGE_VERSION, _STORAGE_KEY)
             try:
                 await store.async_remove()
                 clear_backfill_failed_issue(hass)

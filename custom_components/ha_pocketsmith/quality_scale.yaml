@@ -172,12 +172,22 @@ rules:
     status: done
     comment: Custom entity icons are defined through icons.json, including state-dependent binary sensor icons.
   reconfiguration-flow:
-    status: todo
+    status: done
     comment: >-
-      The UI replaces and validates API keys, but does not verify that a replacement key belongs to the same PocketSmith account.
+      Replacement keys are validated against the stored account ID or the existing service-device identifier; unverified identities fail closed.
   repair-issues:
     status: done
     comment: Uncategorised data and failed backfill create translated repair issues.
   stale-devices:
     status: exempt
     comment: The single service device follows the config entry lifecycle.
+  async-dependency:
+    status: exempt
+    comment: No integration-specific external dependency; direct HTTP access uses asynchronous aiohttp.
+  inject-websession:
+    status: done
+    comment: Config flow, coordinator, and backfill use Home Assistant's shared aiohttp client session.
+  strict-typing:
+    status: done
+    comment: >-
+      Strict mypy checks all integration modules in CI; the typed config entry carries a concrete coordinator and backfill state.

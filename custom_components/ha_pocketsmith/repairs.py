@@ -1,5 +1,6 @@
 """Repair issue helpers for the PocketSmith integration."""
 import logging
+from typing import Any
 
 from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue, async_delete_issue
 from homeassistant.core import HomeAssistant
@@ -12,12 +13,12 @@ ISSUE_UNCATEGORISED = "uncategorised_transactions"
 ISSUE_BACKFILL_FAILED = "backfill_failed"
 
 
-def update_repair_issues(hass: HomeAssistant, data: dict) -> None:
+def update_repair_issues(hass: HomeAssistant, data: dict[str, Any]) -> None:
     """Create or clear repair issues based on the latest coordinator data."""
     _update_uncategorised_issue(hass, data)
 
 
-def _update_uncategorised_issue(hass: HomeAssistant, data: dict) -> None:
+def _update_uncategorised_issue(hass: HomeAssistant, data: dict[str, Any]) -> None:
     count = data.get("uncategorised_count", 0) or 0
     if count > 0:
         async_create_issue(

@@ -2,6 +2,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
+from homeassistant.components.recorder.models import StatisticMeanType
 
 from custom_components.ha_pocketsmith import diagnostics, repairs, statistics, system_health
 from custom_components.ha_pocketsmith.const import DOMAIN
@@ -21,6 +22,10 @@ def test_statistics_snapshot(hass):
         calls = insert.call_args_list
         assert len(calls) == 5
         assert calls[0].args[1]["statistic_id"] == f"{DOMAIN}:account_1_savings_balance"
+        assert calls[0].args[1]["mean_type"] == StatisticMeanType.ARITHMETIC
+        assert calls[1].args[1]["mean_type"] == StatisticMeanType.ARITHMETIC
+        assert calls[2].args[1]["mean_type"] == StatisticMeanType.NONE
+        assert calls[-1].args[1]["mean_type"] == StatisticMeanType.ARITHMETIC
         assert calls[0].args[2][0]["mean"] == 12
         assert calls[1].args[2][0]["mean"] == 12
         assert calls[2].args[2][0]["sum"] == 5

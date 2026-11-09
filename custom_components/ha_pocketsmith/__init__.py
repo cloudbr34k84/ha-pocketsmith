@@ -2,18 +2,20 @@
 import logging
 import asyncio
 from datetime import timedelta
+from typing import Any
 
 from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers import config_validation as cv
 
 from .actions import async_register_actions
 from .backfill import async_trigger_backfill
 from .const import (
     DEFAULT_UPDATE_INTERVAL_HOURS,
+    CONF_POCKETSMITH_USER_ID,
     DOMAIN,
     BackfillState,
     PocketSmithData,
+    PocketSmithConfigEntry,
 )
 from .coordinator import PocketSmithCoordinator
 from .migration import async_migrate_entity_ids
@@ -24,10 +26,7 @@ PLATFORMS = ["sensor", "binary_sensor", "button", "select"]
 
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
-type PocketSmithConfigEntry = ConfigEntry[PocketSmithData]
-
-
-async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_migrate_entry(hass: HomeAssistant, entry: PocketSmithConfigEntry) -> bool:
     """Migrate old config entry versions to the current schema."""
     _LOGGER.debug("Migrating PocketSmith config entry from version %s.%s", entry.version, entry.minor_version)
 
@@ -39,7 +38,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return True
 
 
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
     """Register actions independently of config entry availability."""
     async_register_actions(hass)
     return True
@@ -54,6 +53,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: PocketSmithConfigEntry) 
         entry=entry,
     )
     await coordinator.async_config_entry_first_refresh()
+    if CONF_POCKETSMITH_USER_ID not in entry.data:
+        hass.config_entries.async_update_entry(
+            entry, data={**entry.data, CONF_POCKETSMITH_USER_ID: coordinator.data["user_id"]}
+        )
     entry.runtime_data = PocketSmithData(coordinator=coordinator, backfill=BackfillState())
 
     async_migrate_entity_ids(hass, entry)

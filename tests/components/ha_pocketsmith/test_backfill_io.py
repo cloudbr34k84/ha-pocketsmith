@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import aiohttp
 import pytest
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.components.recorder.models import StatisticMeanType
 from custom_components.ha_pocketsmith import backfill
 from custom_components.ha_pocketsmith.const import BackfillState
 
@@ -38,6 +39,9 @@ async def test_historical_import(hass, mode):
         if mode == "success":
             clear_repair.assert_called_once_with(hass)
             assert insert.call_count == 4
+            assert [call.args[1]["mean_type"] for call in insert.call_args_list[:2]] == [StatisticMeanType.ARITHMETIC] * 2
+            assert all(call.args[1]["mean_type"] == StatisticMeanType.NONE for call in insert.call_args_list[2:])
+            assert all("unit_class" in call.args[1] for call in insert.call_args_list)
             assert insert.call_args_list[0].args[2][-1]["mean"] == 100
             assert store.return_value.async_save.call_args.args[0]["all_done"]
 

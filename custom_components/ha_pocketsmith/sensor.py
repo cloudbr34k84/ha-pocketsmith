@@ -1,23 +1,23 @@
 """PocketSmith sensor platform."""
 import logging
 import re
+from typing import Any, cast
 
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
 from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, SensorEntityDescription, SensorStateClass
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import BACKFILL_STATUS_IDLE, CONF_ACTIVE_CURRENCY, DEFAULT_CURRENCY, DOMAIN, BackfillState
+from .const import BACKFILL_STATUS_IDLE, CONF_ACTIVE_CURRENCY, DEFAULT_CURRENCY, DOMAIN, BackfillState, PocketSmithConfigEntry
 from .coordinator import PocketSmithCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 PARALLEL_UPDATES = 0
 
 
-def _make_device_info(coordinator) -> DeviceInfo:
+def _make_device_info(coordinator: PocketSmithCoordinator) -> DeviceInfo:
     """Return a shared DeviceInfo for all PocketSmith sensors."""
     return DeviceInfo(
         identifiers={(DOMAIN, str(coordinator.data["user_id"]))},
@@ -36,7 +36,7 @@ ACCOUNT_BALANCE_DESCRIPTION = SensorEntityDescription(
 )
 
 
-async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+async def async_setup_platform(hass: HomeAssistant, config: dict[str, Any], async_add_entities: AddEntitiesCallback, discovery_info: dict[str, Any] | None = None) -> None:
     """YAML configuration is no longer supported."""
     _LOGGER.warning(
         "PocketSmith YAML configuration is no longer supported. "
@@ -46,7 +46,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: PocketSmithConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up PocketSmith sensors from a config entry."""
@@ -63,11 +63,11 @@ async def async_setup_entry(
     }
 
     # Build a lookup of category_id → enriched dict for rollup sensor construction.
-    cat_by_id: dict[int, dict] = {
+    cat_by_id: dict[int, dict[str, Any]] = {
         cat["category_id"]: cat for cat in enriched_categories
     }
 
-    sensors = [
+    sensors: list[SensorEntity] = [
         PocketSmithSensor(coordinator, account)
         for account in coordinator.data["accounts"]
     ]
@@ -94,25 +94,26 @@ async def async_setup_entry(
     async_add_entities(sensors)
 
 
-class PocketSmithSensor(CoordinatorEntity, SensorEntity):
+class PocketSmithSensor(CoordinatorEntity[PocketSmithCoordinator], SensorEntity):
     """Representation of a PocketSmith account balance sensor."""
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator: PocketSmithCoordinator, account: dict) -> None:
+    def __init__(self, coordinator: PocketSmithCoordinator, account: dict[str, Any]) -> None:
         """Initialise the sensor."""
         super().__init__(coordinator)
         self._account_id = account["id"]
-        self._attr_translation_placeholders = {"account": account.get("title") or "Unnamed Account"}
+        self._name_placeholders = {"account": account.get("title") or "Unnamed Account"}
+        self._attr_translation_placeholders = self._name_placeholders
         self.entity_description = ACCOUNT_BALANCE_DESCRIPTION
         self._attr_device_info = _make_device_info(self.coordinator)
 
     @property
-    def _account(self) -> dict:
+    def _account(self) -> dict[str, Any]:
         """Return the current account dict from coordinator data."""
         for account in self.coordinator.data.get("accounts", []):
             if account["id"] == self._account_id:
-                return account
+                return cast(dict[str, Any], account)
         return {}
 
     @property
@@ -122,22 +123,22 @@ class PocketSmithSensor(CoordinatorEntity, SensorEntity):
 
     def _handle_coordinator_update(self) -> None:
         """Keep the translated name aligned with the PocketSmith account."""
-        self._attr_translation_placeholders["account"] = self._account.get("title") or "Unnamed Account"
+        self._name_placeholders["account"] = self._account.get("title") or "Unnamed Account"
         self.__dict__.pop("name", None)
         super()._handle_coordinator_update()
 
     @property
-    def native_value(self):
+    def native_value(self) -> float | None:
         """Return the current account balance."""
-        return self._account.get("current_balance")
+        return cast(float | None, self._account.get("current_balance"))
 
     @property
     def native_unit_of_measurement(self) -> str:
         """Return the currency code as the unit."""
-        return self._account.get("currency_code", "USD").upper()
+        return cast(str, self._account.get("currency_code", "USD").upper())
 
     @property
-    def extra_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return filtered transaction account sub-accounts as attributes."""
         filtered = [
             {
@@ -151,7 +152,7 @@ class PocketSmithSensor(CoordinatorEntity, SensorEntity):
         return {"transaction_accounts": filtered}
 
 
-class PocketSmithUncategorisedTransactions(CoordinatorEntity, SensorEntity):
+class PocketSmithUncategorisedTransactions(CoordinatorEntity[PocketSmithCoordinator], SensorEntity):
     """Sensor reporting the count of uncategorised transactions."""
 
     _attr_has_entity_name = True
@@ -169,9 +170,9 @@ class PocketSmithUncategorisedTransactions(CoordinatorEntity, SensorEntity):
         return "pocketsmith_%s_uncategorised_transactions" % self._user_id
 
     @property
-    def native_value(self):
+    def native_value(self) -> int | None:
         """Return the count of uncategorised transactions."""
-        return self.coordinator.data.get("uncategorised_count")
+        return cast(int | None, self.coordinator.data.get("uncategorised_count"))
 
     @property
     def native_unit_of_measurement(self) -> str:
@@ -179,7 +180,7 @@ class PocketSmithUncategorisedTransactions(CoordinatorEntity, SensorEntity):
         return "transactions"
 
 
-class PocketSmithCategoriesSensor(CoordinatorEntity, SensorEntity):
+class PocketSmithCategoriesSensor(CoordinatorEntity[PocketSmithCoordinator], SensorEntity):
     """Sensor reporting the total number of PocketSmith categories."""
 
     _attr_has_entity_name = True
@@ -199,12 +200,12 @@ class PocketSmithCategoriesSensor(CoordinatorEntity, SensorEntity):
         return "pocketsmith_%s_categories" % self._user_id
 
     @property
-    def native_value(self):
+    def native_value(self) -> int:
         """Return the count of categories."""
         return len(self.coordinator.data.get("enriched_categories", []))
 
     @property
-    def extra_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return budgeted and unbudgeted category name lists."""
         cats = self.coordinator.data.get("enriched_categories", [])
         return {
@@ -213,7 +214,7 @@ class PocketSmithCategoriesSensor(CoordinatorEntity, SensorEntity):
         }
 
 
-class PocketSmithCategorySensor(CoordinatorEntity, SensorEntity):
+class PocketSmithCategorySensor(CoordinatorEntity[PocketSmithCoordinator], SensorEntity):
     """Sensor representing a single enriched PocketSmith category."""
 
     _attr_has_entity_name = True
@@ -221,7 +222,7 @@ class PocketSmithCategorySensor(CoordinatorEntity, SensorEntity):
     _attr_device_class = SensorDeviceClass.MONETARY
     _attr_state_class = SensorStateClass.TOTAL
 
-    def __init__(self, coordinator: PocketSmithCoordinator, enriched_category: dict) -> None:
+    def __init__(self, coordinator: PocketSmithCoordinator, enriched_category: dict[str, Any]) -> None:
         """Initialise the sensor."""
         super().__init__(coordinator)
         self._category_id = enriched_category["category_id"]
@@ -230,11 +231,11 @@ class PocketSmithCategorySensor(CoordinatorEntity, SensorEntity):
         self._attr_device_info = _make_device_info(self.coordinator)
 
     @property
-    def _enriched(self) -> dict:
+    def _enriched(self) -> dict[str, Any]:
         """Return the current enriched category from coordinator data."""
         for cat in self.coordinator.data.get("enriched_categories", []):
             if cat.get("category_id") == self._category_id:
-                return cat
+                return cast(dict[str, Any], cat)
         return {}
 
     @property
@@ -245,21 +246,21 @@ class PocketSmithCategorySensor(CoordinatorEntity, SensorEntity):
     @property
     def name(self) -> str:
         """Return the category title."""
-        return self._enriched.get("category_title", self._category_slug)
+        return cast(str, self._enriched.get("category_title", self._category_slug))
 
     @property
-    def native_value(self):
+    def native_value(self) -> float:
         """Return the actual spend for the current period, or 0 if not available."""
         actual = self._enriched.get("actual")
-        return actual if actual is not None else 0
+        return cast(float, actual if actual is not None else 0)
 
     @property
     def native_unit_of_measurement(self) -> str:
         """Return the currency code."""
-        return self._enriched.get("currency", DEFAULT_CURRENCY)
+        return cast(str, self._enriched.get("currency", DEFAULT_CURRENCY))
 
     @property
-    def extra_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return enriched category details as attributes."""
         e = self._enriched
         return {
@@ -292,7 +293,7 @@ class PocketSmithCategorySensor(CoordinatorEntity, SensorEntity):
         }
 
 
-class PocketSmithCategoryRollupSensor(CoordinatorEntity, SensorEntity):
+class PocketSmithCategoryRollupSensor(CoordinatorEntity[PocketSmithCoordinator], SensorEntity):
     """Sensor that aggregates all direct and indirect children of a parent category.
 
     Identified by:
@@ -318,7 +319,8 @@ class PocketSmithCategoryRollupSensor(CoordinatorEntity, SensorEntity):
         """Initialise the rollup sensor."""
         super().__init__(coordinator)
         self._category_id = category_id
-        self._attr_translation_placeholders = {"category": category_title}
+        self._name_placeholders = {"category": category_title}
+        self._attr_translation_placeholders = self._name_placeholders
         raw_slug = category_title.lower().replace(" ", "_")
         self._category_slug = re.sub(r"[^\w]", "", raw_slug)
         self._category_level = category_level
@@ -333,7 +335,7 @@ class PocketSmithCategoryRollupSensor(CoordinatorEntity, SensorEntity):
         """Keep the translated name aligned with the parent category."""
         for cat in self.coordinator.data.get("enriched_categories", []):
             if cat.get("category_id") == self._category_id:
-                self._attr_translation_placeholders["category"] = cat.get("category_title") or self._category_slug
+                self._name_placeholders["category"] = cat.get("category_title") or self._category_slug
                 self.__dict__.pop("name", None)
                 break
         super()._handle_coordinator_update()
@@ -342,7 +344,7 @@ class PocketSmithCategoryRollupSensor(CoordinatorEntity, SensorEntity):
     def native_unit_of_measurement(self) -> str:
         return self._currency
 
-    def _children(self) -> list[dict]:
+    def _children(self) -> list[dict[str, Any]]:
         """Return all enriched categories whose parent_id matches this category."""
         return [
             cat for cat in self.coordinator.data.get("enriched_categories", [])
@@ -350,14 +352,14 @@ class PocketSmithCategoryRollupSensor(CoordinatorEntity, SensorEntity):
         ]
 
     @property
-    def native_value(self):
+    def native_value(self) -> float:
         """Return sum of actual spend across all children."""
         return round(
             sum(c.get("actual") or 0 for c in self._children()), 2
         )
 
     @property
-    def extra_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict[str, Any]:
         children = self._children()
         total_actual = sum(c.get("actual") or 0 for c in children)
         total_budgeted = sum(c.get("budgeted") or 0 for c in children)
@@ -391,7 +393,7 @@ class PocketSmithCategoryRollupSensor(CoordinatorEntity, SensorEntity):
         }
 
 
-class PocketSmithNetWorthSensor(CoordinatorEntity, SensorEntity):
+class PocketSmithNetWorthSensor(CoordinatorEntity[PocketSmithCoordinator], SensorEntity):
     """Sensor reporting the total net worth across all accounts."""
 
     _attr_has_entity_name = True
@@ -399,7 +401,7 @@ class PocketSmithNetWorthSensor(CoordinatorEntity, SensorEntity):
     _attr_device_class = SensorDeviceClass.MONETARY
     _attr_state_class = SensorStateClass.TOTAL
 
-    def __init__(self, coordinator: PocketSmithCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: PocketSmithCoordinator, entry: PocketSmithConfigEntry) -> None:
         """Initialise the sensor."""
         super().__init__(coordinator)
         self._entry = entry
@@ -412,7 +414,7 @@ class PocketSmithNetWorthSensor(CoordinatorEntity, SensorEntity):
         return "pocketsmith_%s_net_worth" % self._user_id
 
     @property
-    def native_value(self):
+    def native_value(self) -> float:
         """Return the sum of current_balance across all accounts."""
         return sum(
             acc.get("current_balance") or 0
@@ -424,14 +426,14 @@ class PocketSmithNetWorthSensor(CoordinatorEntity, SensorEntity):
         """Return the active currency from options, falling back to the first account's currency."""
         active = self._entry.options.get(CONF_ACTIVE_CURRENCY)
         if active:
-            return active.upper()
+            return cast(str, active.upper())
         accounts = self.coordinator.data.get("accounts", [])
         if accounts:
             return (accounts[0].get("currency_code") or DEFAULT_CURRENCY).upper()
         return DEFAULT_CURRENCY
 
 
-class PocketSmithUserSensor(CoordinatorEntity, SensorEntity):
+class PocketSmithUserSensor(CoordinatorEntity[PocketSmithCoordinator], SensorEntity):
     """Sensor reporting PocketSmith user profile information."""
 
     _attr_has_entity_name = True
@@ -451,12 +453,12 @@ class PocketSmithUserSensor(CoordinatorEntity, SensorEntity):
         return "pocketsmith_%s_user" % self._user_id
 
     @property
-    def native_value(self):
+    def native_value(self) -> str | None:
         """Return the user's name."""
-        return self.coordinator.data.get("user", {}).get("name")
+        return cast(str | None, self.coordinator.data.get("user", {}).get("name"))
 
     @property
-    def extra_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict[str, Any]:
         """Return the user profile dict, excluding sensitive keys."""
         user = self.coordinator.data.get("user")
         if not user:
@@ -464,7 +466,7 @@ class PocketSmithUserSensor(CoordinatorEntity, SensorEntity):
         return {k: v for k, v in user.items() if k not in ("email", "tell_a_friend_code")}
 
 
-class PocketSmithBackfillSensor(CoordinatorEntity, SensorEntity):
+class PocketSmithBackfillSensor(CoordinatorEntity[PocketSmithCoordinator], SensorEntity):
     """Sensor that exposes historical backfill progress.
 
     State is one of: idle / running / complete / failed.
@@ -494,7 +496,7 @@ class PocketSmithBackfillSensor(CoordinatorEntity, SensorEntity):
         return self._backfill.status
 
     @property
-    def extra_state_attributes(self) -> dict:
+    def extra_state_attributes(self) -> dict[str, Any]:
         return {
             "accounts_total": self._backfill.accounts_total,
             "accounts_remaining": self._backfill.accounts_remaining,

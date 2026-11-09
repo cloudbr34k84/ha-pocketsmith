@@ -2,25 +2,24 @@
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_ACTIVE_CURRENCY, CONF_ENABLE_BACKFILL
+from .const import CONF_ACTIVE_CURRENCY, CONF_ENABLE_BACKFILL, PocketSmithConfigEntry
 
 TO_REDACT = ["developer_key"]
 
 
 async def async_get_config_entry_diagnostics(
-    hass: HomeAssistant, entry: ConfigEntry
+    hass: HomeAssistant, entry: PocketSmithConfigEntry
 ) -> dict[str, Any]:
     """Return diagnostics for a PocketSmith config entry."""
     coordinator = entry.runtime_data.coordinator
     data = coordinator.data
 
     enriched = data.get("enriched_categories", [])
-    monthly_events: dict = data.get("monthly_events", {})
-    monthly_transactions: dict = data.get("monthly_transactions", {})
-    budget: list = data.get("budget", [])
+    monthly_events: dict[int, float] = data.get("monthly_events", {})
+    monthly_transactions: dict[int, float] = data.get("monthly_transactions", {})
+    budget: list[dict[str, Any]] = data.get("budget", [])
 
     null_budgeted = [c for c in enriched if c.get("budgeted") is None]
     null_actual = [c for c in enriched if c.get("actual") is None]

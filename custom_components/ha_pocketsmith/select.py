@@ -1,15 +1,15 @@
 """PocketSmith select platform — active currency for Net Worth sensor."""
 import logging
+from typing import cast
 
 from homeassistant.components.select import SelectEntity
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntryType, DeviceInfo
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import CONF_ACTIVE_CURRENCY, DEFAULT_CURRENCY, DOMAIN
+from .const import CONF_ACTIVE_CURRENCY, DEFAULT_CURRENCY, DOMAIN, PocketSmithConfigEntry
 from .coordinator import PocketSmithCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -18,7 +18,7 @@ PARALLEL_UPDATES = 0
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: PocketSmithConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up PocketSmith select entities from a config entry."""
@@ -26,14 +26,14 @@ async def async_setup_entry(
     async_add_entities([PocketSmithActiveCurrencySelect(coordinator, entry)])
 
 
-class PocketSmithActiveCurrencySelect(CoordinatorEntity, SelectEntity):
+class PocketSmithActiveCurrencySelect(CoordinatorEntity[PocketSmithCoordinator], SelectEntity):
     """Select entity that controls which currency the Net Worth sensor reports in."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "active_currency"
     _attr_entity_category = EntityCategory.CONFIG
 
-    def __init__(self, coordinator: PocketSmithCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: PocketSmithCoordinator, entry: PocketSmithConfigEntry) -> None:
         """Initialise the select entity."""
         super().__init__(coordinator)
         self._entry = entry
@@ -64,7 +64,7 @@ class PocketSmithActiveCurrencySelect(CoordinatorEntity, SelectEntity):
         """Return the currently selected currency."""
         saved = self._entry.options.get(CONF_ACTIVE_CURRENCY)
         if saved and saved in self.options:
-            return saved
+            return cast(str, saved)
         # Default to the first account's currency.
         accounts = self.coordinator.data.get("accounts", [])
         if accounts:

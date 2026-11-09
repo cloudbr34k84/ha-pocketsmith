@@ -9,3 +9,4 @@ ha_dev_checklist.md
 htmlcov/
 coverage.json
 .pytest_cache/
+.mypy_cache/

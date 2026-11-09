@@ -11,7 +11,7 @@ API_BASE = "https://api.pocketsmith.com/v2"
 REQUEST_TIMEOUT = 30
 
 
-def parse_link_next(link_header: str):
+def parse_link_next(link_header: str) -> str | None:
     """Extract the rel="next" URL from a Link header string, or return None."""
     for part in link_header.split(","):
         if 'rel="next"' in part:

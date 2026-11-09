@@ -33,6 +33,9 @@
       }
     },
     "error": {
+      "wrong_account": "This key belongs to a different PocketSmith account. Use a key for the original account.",
+      "cannot_verify_account": "The original PocketSmith account could not be verified. Restore the original connection before updating the key, or remove and add the integration for a new account.",
+      "invalid_response": "PocketSmith returned an invalid user profile. Try again later.",
       "invalid_auth": "Invalid developer key. Please check and try again.",
       "insufficient_permissions": "Your developer key doesn't have the required permissions. In PocketSmith, go to Settings \u2192 API and ensure your key has read access.",
       "cannot_connect": "Unable to reach the PocketSmith API. Check your network connection.",

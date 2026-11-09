@@ -1,11 +1,20 @@
 """Constants for the PocketSmith integration."""
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from asyncio import Task
+from typing import TYPE_CHECKING
+
+from homeassistant.config_entries import ConfigEntry
+
+if TYPE_CHECKING:
+    from .coordinator import PocketSmithCoordinator
 
 DOMAIN = "ha_pocketsmith"
 
 CONF_ENABLE_BACKFILL = "enable_backfill"
 CONF_ACTIVE_CURRENCY = "active_currency"
+CONF_POCKETSMITH_USER_ID = "pocketsmith_user_id"
 
 DEFAULT_UPDATE_INTERVAL_HOURS = 1
 DEFAULT_ENABLE_BACKFILL = True
@@ -25,11 +34,14 @@ class BackfillState:
     accounts_total: int = 0
     accounts_remaining: int = 0
     current_account: str | None = None
-    task: Task | None = field(default=None, repr=False)
+    task: Task[None] | None = field(default=None, repr=False)
 
 
 @dataclass
 class PocketSmithData:
     """Runtime data stored on the config entry."""
-    coordinator: object  # PocketSmithCoordinator — typed as object to avoid circular import
+    coordinator: PocketSmithCoordinator
     backfill: BackfillState = field(default_factory=BackfillState)
+
+
+type PocketSmithConfigEntry = ConfigEntry[PocketSmithData]

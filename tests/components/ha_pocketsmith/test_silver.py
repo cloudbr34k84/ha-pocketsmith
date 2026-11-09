@@ -46,6 +46,9 @@ async def test_setup_and_migration(hass):
         patch("custom_components.ha_pocketsmith.async_trigger_backfill", new_callable=AsyncMock),
     ):
         coordinator.return_value.async_config_entry_first_refresh = AsyncMock()
+        coordinator.return_value.data = {"user_id": 42}
+        assert await async_setup_entry(hass, entry)
+        assert entry.data["pocketsmith_user_id"] == 42
         assert await async_setup_entry(hass, entry)
         assert entry.runtime_data.coordinator is coordinator.return_value
 
@@ -88,6 +91,8 @@ async def test_unload_cancels_backfill_only_after_platforms_unload(hass, unload_
     with patch.object(hass.config_entries, "async_unload_platforms", return_value=unload_ok):
         assert await async_unload_entry(hass, entry) is unload_ok
     assert cancelled.is_set() is unload_ok
+    if unload_ok:
+        entry.async_on_unload.call_args.args[0]()
     if not unload_ok:
         task.cancel()
         with pytest.raises(asyncio.CancelledError):

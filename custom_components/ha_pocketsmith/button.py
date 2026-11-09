@@ -2,13 +2,12 @@
 import logging
 
 from homeassistant.components.button import ButtonEntity
-from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, PocketSmithConfigEntry
 from .coordinator import PocketSmithCoordinator
 from .sensor import _make_device_info
 
@@ -18,7 +17,7 @@ PARALLEL_UPDATES = 0
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    entry: PocketSmithConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up PocketSmith button entities from a config entry."""
@@ -29,7 +28,7 @@ async def async_setup_entry(
     ])
 
 
-class PocketSmithRefreshButton(CoordinatorEntity, ButtonEntity):
+class PocketSmithRefreshButton(CoordinatorEntity[PocketSmithCoordinator], ButtonEntity):
     """Button that triggers an immediate PocketSmith data refresh."""
 
     _attr_has_entity_name = True
@@ -46,14 +45,14 @@ class PocketSmithRefreshButton(CoordinatorEntity, ButtonEntity):
         await self.hass.services.async_call(DOMAIN, "refresh", {}, blocking=True)
 
 
-class PocketSmithResetBackfillButton(CoordinatorEntity, ButtonEntity):
+class PocketSmithResetBackfillButton(CoordinatorEntity[PocketSmithCoordinator], ButtonEntity):
     """Button that resets historical backfill progress."""
 
     _attr_has_entity_name = True
     _attr_translation_key = "reset_backfill"
     _attr_entity_category = EntityCategory.CONFIG
 
-    def __init__(self, coordinator: PocketSmithCoordinator, entry: ConfigEntry) -> None:
+    def __init__(self, coordinator: PocketSmithCoordinator, entry: PocketSmithConfigEntry) -> None:
         super().__init__(coordinator)
         self._entry = entry
         self._attr_unique_id = "pocketsmith_%s_reset_backfill" % coordinator.data["user_id"]

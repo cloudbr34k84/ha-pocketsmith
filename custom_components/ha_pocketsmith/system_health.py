@@ -1,11 +1,10 @@
 """System health for the PocketSmith integration."""
-from typing import Any
+from typing import Any, cast
 
 from homeassistant.components import system_health
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 
-from .const import DOMAIN
+from .const import DOMAIN, PocketSmithConfigEntry
 
 
 @callback
@@ -20,7 +19,7 @@ async def system_health_info(hass: HomeAssistant) -> dict[str, Any]:
     if not entries:
         return {"api_reachable": False}
 
-    entry = entries[0]
+    entry = cast(PocketSmithConfigEntry, entries[0])
     try:
         coordinator = entry.runtime_data.coordinator
     except AttributeError:

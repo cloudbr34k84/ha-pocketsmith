@@ -5,3 +5,8 @@ asyncio_mode = "auto"
 [tool.coverage.run]
 source = ["custom_components/ha_pocketsmith"]
 omit = ["tests/*"]
+
+[tool.mypy]
+strict = true
+follow_imports = "silent"
+files = ["custom_components/ha_pocketsmith"]

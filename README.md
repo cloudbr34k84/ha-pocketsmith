@@ -103,6 +103,12 @@ immediate update is needed.
 
 If you need to replace your developer key without losing entity history, click the three-dot menu (⋮) → **Reconfigure**. Enter the new key and submit — the integration reloads in place with no data loss.
 
+The replacement key must belong to the same PocketSmith user. Existing entries
+recover that identity from their registered PocketSmith service device when
+needed. If neither a stored identity nor an unambiguous service device exists,
+the integration cannot verify the account and will ask you to restore the
+original connection or remove and add the integration for a different account.
+
 ### Re-authentication
 
 If the integration raises an authentication error, it will prompt you to re-authenticate automatically. You can also trigger this from the three-dot menu.

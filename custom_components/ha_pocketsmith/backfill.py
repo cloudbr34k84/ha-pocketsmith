@@ -34,9 +34,10 @@ import asyncio
 import calendar
 import logging
 from datetime import date, datetime, timedelta, timezone
+from typing import Any
 
 import aiohttp
-from homeassistant.components.recorder.models import StatisticData
+from homeassistant.components.recorder.models import StatisticData, StatisticMeanType, StatisticMetaData
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.components.recorder.statistics import async_add_external_statistics
@@ -56,7 +57,9 @@ from .const import (
     DEFAULT_ENABLE_BACKFILL,
     DOMAIN,
     BackfillState,
+    PocketSmithConfigEntry,
 )
+from .coordinator import PocketSmithCoordinator
 from .repairs import clear_backfill_failed_issue, raise_backfill_failed_issue
 from .statistics import (
     _account_statistic_id,
@@ -75,7 +78,7 @@ _INTER_PAGE_DELAY = 0.2  # seconds between pages to be a polite API consumer
 
 
 async def async_trigger_backfill(
-    hass: HomeAssistant, coordinator, data: dict, entry, backfill_state: BackfillState
+    hass: HomeAssistant, coordinator: PocketSmithCoordinator, data: dict[str, Any], entry: PocketSmithConfigEntry, backfill_state: BackfillState
 ) -> None:
     """Spawn the backfill sweep as a background task if enabled and not already complete."""
     if not entry.options.get(CONF_ENABLE_BACKFILL, DEFAULT_ENABLE_BACKFILL):
@@ -91,10 +94,14 @@ async def async_trigger_backfill(
         eager_start=False,
     )
     backfill_state.task = task
-    entry.async_on_unload(task.cancel)
+    def cancel_backfill() -> None:
+        """Cancel the task when entry setup fails or unload completes."""
+        task.cancel()
+
+    entry.async_on_unload(cancel_backfill)
 
 
-async def _run_backfill(hass: HomeAssistant, coordinator, data: dict, backfill_state: BackfillState) -> None:
+async def _run_backfill(hass: HomeAssistant, coordinator: PocketSmithCoordinator, data: dict[str, Any], backfill_state: BackfillState) -> None:
     """Full historical backfill — runs in the background, resumes on restart."""
     try:
         await _run_backfill_inner(hass, coordinator, data, backfill_state)
@@ -109,9 +116,9 @@ async def _run_backfill(hass: HomeAssistant, coordinator, data: dict, backfill_s
         )
 
 
-async def _run_backfill_inner(hass: HomeAssistant, coordinator, data: dict, backfill_state: BackfillState) -> None:
+async def _run_backfill_inner(hass: HomeAssistant, coordinator: PocketSmithCoordinator, data: dict[str, Any], backfill_state: BackfillState) -> None:
     """Inner backfill implementation — called by _run_backfill inside a safety net."""
-    store = Store(hass, _STORAGE_VERSION, _STORAGE_KEY)
+    store: Store[dict[str, Any]] = Store(hass, _STORAGE_VERSION, _STORAGE_KEY)
     stored = await store.async_load() or {}
     completed_accounts: set[int] = set(stored.get("completed_accounts", []))
     all_done: bool = stored.get("all_done", False)
@@ -129,7 +136,7 @@ async def _run_backfill_inner(hass: HomeAssistant, coordinator, data: dict, back
     categories = data.get("categories", [])
 
     # Build a flat map of category_id → category metadata for fan-out.
-    cat_meta: dict[int, dict] = {}
+    cat_meta: dict[int, dict[str, Any]] = {}
     _flatten_categories(categories, cat_meta)
 
     # Track per-account current balances so we can reconstruct historical balances.
@@ -221,7 +228,8 @@ async def _run_backfill_inner(hass: HomeAssistant, coordinator, data: dict, back
 
         rows = _reconstruct_balance_rows(daily_nets, current_balance, today)
         if rows:
-            metadata = {
+            metadata: StatisticMetaData = {
+                "mean_type": StatisticMeanType.ARITHMETIC,
                 "has_sum": False,
                 "name": "%s Balance" % title,
                 "source": DOMAIN,
@@ -247,6 +255,7 @@ async def _run_backfill_inner(hass: HomeAssistant, coordinator, data: dict, back
             async_add_external_statistics(
                 hass,
                 {
+                    "mean_type": StatisticMeanType.ARITHMETIC,
                     "has_sum": False,
                     "name": "Net Worth",
                     "source": DOMAIN,
@@ -301,10 +310,12 @@ async def _run_backfill_inner(hass: HomeAssistant, coordinator, data: dict, back
         async_add_external_statistics(
             hass,
             {
+                "mean_type": StatisticMeanType.NONE,
                 "has_sum": True,
                 "name": display_name,
                 "source": DOMAIN,
                 "statistic_id": statistic_id,
+                "unit_class": None,
                 "unit_of_measurement": currency,
             },
             month_rows,
@@ -331,15 +342,15 @@ async def _run_backfill_inner(hass: HomeAssistant, coordinator, data: dict, back
 async def _sweep_account(
     hass: HomeAssistant,
     session: aiohttp.ClientSession,
-    coordinator,
+    coordinator: PocketSmithCoordinator,
     account_id: int,
-    cat_meta: dict[int, dict],
+    cat_meta: dict[int, dict[str, Any]],
 ) -> tuple[dict[date, float] | None, dict[tuple[int, int, int], float]]:
     """Fetch ALL transactions for an account, return daily nets and category-month totals.
 
     Returns (None, {}) on unrecoverable error.
     """
-    url = "%s/accounts/%s/transactions?per_page=1000&order=asc" % (API_BASE, account_id)
+    url: str | None = "%s/accounts/%s/transactions?per_page=1000&order=asc" % (API_BASE, account_id)
     daily_nets: dict[date, float] = {}
     cat_month_totals: dict[tuple[int, int, int], float] = {}
     page_num = 0
@@ -384,10 +395,10 @@ async def _sweep_account(
 
 async def _fetch_page_with_retry(
     session: aiohttp.ClientSession,
-    coordinator,
+    coordinator: PocketSmithCoordinator,
     url: str,
     context: str,
-) -> tuple[list | None, str, bool]:
+) -> tuple[list[dict[str, Any]] | None, str, bool]:
     """Fetch one page with retry on 429/5xx. Returns (data, link_header, had_error)."""
     def connection_state(unavailable: bool) -> None:
         previous = getattr(coordinator, "_backfill_unavailable", False) is True
@@ -533,13 +544,13 @@ def _reconstruct_net_worth_rows(
 # Category metadata helpers
 # ---------------------------------------------------------------------------
 
-def _flatten_categories(cats: list, flat: dict[int, dict]) -> None:
+def _flatten_categories(cats: list[dict[str, Any]], flat: dict[int, dict[str, Any]]) -> None:
     for cat in cats:
         flat[cat["id"]] = cat
         _flatten_categories(cat.get("children") or [], flat)
 
 
-def _resolve_parent_title(cat_id: int, cat_meta: dict[int, dict]) -> str | None:
+def _resolve_parent_title(cat_id: int, cat_meta: dict[int, dict[str, Any]]) -> str | None:
     cat = cat_meta.get(cat_id, {})
     parent_id = cat.get("parent_id")
     if parent_id and parent_id in cat_meta:
@@ -547,7 +558,7 @@ def _resolve_parent_title(cat_id: int, cat_meta: dict[int, dict]) -> str | None:
     return None
 
 
-def _resolve_category_currency(cat_id: int, data: dict) -> str:
+def _resolve_category_currency(cat_id: int, data: dict[str, Any]) -> str:
     """Pull currency from enriched_categories for this cat_id, fallback AUD."""
     for ec in data.get("enriched_categories", []):
         if ec.get("category_id") == cat_id:

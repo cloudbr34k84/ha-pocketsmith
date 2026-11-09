@@ -19,8 +19,9 @@ Design decisions
 import logging
 import re
 from datetime import datetime, timezone
+from typing import Any
 
-from homeassistant.components.recorder.models import StatisticData
+from homeassistant.components.recorder.models import StatisticData, StatisticMeanType
 from homeassistant.components.recorder.statistics import async_add_external_statistics
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
@@ -64,7 +65,7 @@ def _month_start_utc(year: int, month: int) -> datetime:
 # Main entry point — called by the coordinator after every successful update
 # ---------------------------------------------------------------------------
 
-def async_insert_statistics(hass: HomeAssistant, data: dict) -> None:
+def async_insert_statistics(hass: HomeAssistant, data: dict[str, Any]) -> None:
     """Push current coordinator snapshot into long-term statistics."""
     now = dt_util.utcnow()
     stat_start = now.replace(minute=0, second=0, microsecond=0)
@@ -79,7 +80,7 @@ def async_insert_statistics(hass: HomeAssistant, data: dict) -> None:
 # Account balances
 # ---------------------------------------------------------------------------
 
-def _insert_account_statistics(hass: HomeAssistant, data: dict, stat_start: datetime) -> None:
+def _insert_account_statistics(hass: HomeAssistant, data: dict[str, Any], stat_start: datetime) -> None:
     for account in data.get("accounts", []):
         balance = account.get("current_balance")
         if balance is None:
@@ -92,6 +93,7 @@ def _insert_account_statistics(hass: HomeAssistant, data: dict, stat_start: date
         async_add_external_statistics(
             hass,
             {
+                "mean_type": StatisticMeanType.ARITHMETIC,
                 "has_sum": False,
                 "name": "%s Balance" % title,
                 "source": DOMAIN,
@@ -108,7 +110,7 @@ def _insert_account_statistics(hass: HomeAssistant, data: dict, stat_start: date
 # Net worth
 # ---------------------------------------------------------------------------
 
-def _insert_net_worth_statistic(hass: HomeAssistant, data: dict, stat_start: datetime) -> None:
+def _insert_net_worth_statistic(hass: HomeAssistant, data: dict[str, Any], stat_start: datetime) -> None:
     user_id = data.get("user_id")
     accounts = data.get("accounts", [])
     if not accounts or user_id is None:
@@ -120,6 +122,7 @@ def _insert_net_worth_statistic(hass: HomeAssistant, data: dict, stat_start: dat
     async_add_external_statistics(
         hass,
         {
+            "mean_type": StatisticMeanType.ARITHMETIC,
             "has_sum": False,
             "name": "Net Worth",
             "source": DOMAIN,
@@ -136,7 +139,7 @@ def _insert_net_worth_statistic(hass: HomeAssistant, data: dict, stat_start: dat
 # Category spend
 # ---------------------------------------------------------------------------
 
-def _insert_category_statistics(hass: HomeAssistant, data: dict, stat_start: datetime) -> None:
+def _insert_category_statistics(hass: HomeAssistant, data: dict[str, Any], stat_start: datetime) -> None:
     today = dt_util.now().date()
     month_reset = _month_start_utc(today.year, today.month)
 
@@ -155,6 +158,7 @@ def _insert_category_statistics(hass: HomeAssistant, data: dict, stat_start: dat
         async_add_external_statistics(
             hass,
             {
+                "mean_type": StatisticMeanType.NONE,
                 "has_sum": True,
                 "name": display_name,
                 "source": DOMAIN,
@@ -171,7 +175,7 @@ def _insert_category_statistics(hass: HomeAssistant, data: dict, stat_start: dat
 # Uncategorised transaction count
 # ---------------------------------------------------------------------------
 
-def _insert_uncategorised_statistic(hass: HomeAssistant, data: dict, stat_start: datetime) -> None:
+def _insert_uncategorised_statistic(hass: HomeAssistant, data: dict[str, Any], stat_start: datetime) -> None:
     user_id = data.get("user_id")
     count = data.get("uncategorised_count")
     if user_id is None or count is None:
@@ -180,6 +184,7 @@ def _insert_uncategorised_statistic(hass: HomeAssistant, data: dict, stat_start:
     async_add_external_statistics(
         hass,
         {
+            "mean_type": StatisticMeanType.ARITHMETIC,
             "has_sum": False,
             "name": "Uncategorised Transactions",
             "source": DOMAIN,

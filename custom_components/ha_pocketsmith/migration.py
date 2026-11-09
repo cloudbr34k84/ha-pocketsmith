@@ -3,15 +3,16 @@ import logging
 import re
 
 from homeassistant.core import callback
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
-from .const import DOMAIN
+from .const import DOMAIN, PocketSmithConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
 
 
 @callback
-def async_migrate_entity_ids(hass, entry) -> None:
+def async_migrate_entity_ids(hass: HomeAssistant, entry: PocketSmithConfigEntry) -> None:
     """Migrate this entry only, without deleting history or conflicting entities."""
     registry = er.async_get(hass)
     for entity in er.async_entries_for_config_entry(registry, entry.entry_id):
