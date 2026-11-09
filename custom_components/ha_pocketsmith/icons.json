@@ -1,0 +1,15 @@
+{
+  "entity": {
+    "button": {
+      "refresh": {"default": "mdi:refresh"},
+      "reset_backfill": {"default": "mdi:history"}
+    },
+    "select": {
+      "active_currency": {"default": "mdi:currency-usd"}
+    },
+    "sensor": {
+      "balance": {"default": "mdi:currency-usd"},
+      "backfill_status": {"default": "mdi:database-clock-outline"}
+    }
+  }
+}

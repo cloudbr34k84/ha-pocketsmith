@@ -92,6 +92,13 @@ updates, and hourly polling limits API traffic. Previous custom interval options
 are ignored and the polling number entity is retired. Use the Refresh button or
 `ha_pocketsmith.refresh` action for an additional immediate update.
 
+### Data updates
+
+The integration polls PocketSmith once per hour. Account balances, category
+budgets, transaction totals, events, and diagnostic status entities update from
+the same coordinated API refresh. Use the Refresh button or action when an
+immediate update is needed.
+
 ### Updating your API key
 
 If you need to replace your developer key without losing entity history, click the three-dot menu (⋮) → **Reconfigure**. Enter the new key and submit — the integration reloads in place with no data loss.
@@ -105,6 +112,21 @@ If the integration raises an authentication error, it will prompt you to re-auth
 ## Entities
 
 All entities belong to a single **PocketSmith** device in Home Assistant.
+
+## Supported functionality
+
+PocketSmith is a cloud finance service rather than a physical device. The
+integration supports read-only account balances, net worth, category budgets,
+transaction counts, budget alerts, currency selection, historical statistics,
+manual refresh, and backfill controls. It does not modify transactions,
+categories, budgets, or bank connections.
+
+## Known limitations
+
+- PocketSmith API access is read-only through this integration.
+- Data is refreshed hourly unless a manual refresh is requested.
+- Historical backfill can take a long time for accounts with extensive history.
+- PocketSmith API availability and rate limits can delay updates.
 
 ### Sensors
 

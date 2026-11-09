@@ -117,3 +117,66 @@ rules:
   docs-triggers:
     status: exempt
     comment: No integration-specific triggers.
+  devices:
+    status: done
+    comment: All entities are grouped under one PocketSmith service device per config entry.
+  diagnostics:
+    status: done
+    comment: Diagnostics redact credentials and provide API and data summaries.
+  discovery:
+    status: exempt
+    comment: PocketSmith is a cloud service with no discoverable local endpoint.
+  discovery-update-info:
+    status: exempt
+    comment: No local network discovery or address information exists for this service.
+  docs-data-update:
+    status: done
+    comment: README documents hourly coordinated polling and manual refresh.
+  docs-examples:
+    status: done
+    comment: README includes automation examples for balances, budgets, and notifications.
+  docs-known-limitations:
+    status: done
+    comment: README documents read-only access, polling, backfill duration, and API limits.
+  docs-supported-devices:
+    status: exempt
+    comment: This integration does not integrate physical devices.
+  docs-supported-functions:
+    status: done
+    comment: README lists supported entities, actions, controls, and read-only scope.
+  docs-troubleshooting:
+    status: done
+    comment: README includes authentication, permissions, API availability, and backfill guidance.
+  docs-use-cases:
+    status: done
+    comment: README provides balance, budget, categorisation, and net-worth automation examples.
+  dynamic-devices:
+    status: exempt
+    comment: One static service device is managed per config entry; account data are entities.
+  entity-category:
+    status: done
+    comment: Diagnostic, configuration, and primary entities use appropriate categories.
+  entity-device-class:
+    status: done
+    comment: Monetary and problem entities declare device classes where applicable.
+  entity-disabled-by-default:
+    status: done
+    comment: Less commonly used diagnostic entities are disabled by default.
+  entity-translations:
+    status: done
+    comment: Entity names are provided through strings and English translations.
+  exception-translations:
+    status: done
+    comment: Service action errors use translated exception keys.
+  icon-translations:
+    status: done
+    comment: Custom entity icons are defined through icons.json.
+  reconfiguration-flow:
+    status: done
+    comment: Users can replace the developer key through the UI reconfigure flow.
+  repair-issues:
+    status: done
+    comment: Uncategorised data and failed backfill create translated repair issues.
+  stale-devices:
+    status: exempt
+    comment: The single service device follows the config entry lifecycle.

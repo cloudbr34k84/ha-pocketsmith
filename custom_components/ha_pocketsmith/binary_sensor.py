@@ -87,6 +87,7 @@ class PocketSmithForecastNeedsRecalculateBinarySensor(CoordinatorEntity, BinaryS
 
     _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_enabled_default = False
     _attr_translation_key = "forecast_needs_recalculate"
 
     def __init__(self, coordinator: PocketSmithCoordinator) -> None:

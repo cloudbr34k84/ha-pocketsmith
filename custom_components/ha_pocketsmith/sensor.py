@@ -189,6 +189,7 @@ class PocketSmithCategoriesSensor(CoordinatorEntity, SensorEntity):
 
     _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_enabled_default = False
     _attr_translation_key = "categories"
 
     def __init__(self, coordinator: PocketSmithCoordinator) -> None:
@@ -456,6 +457,7 @@ class PocketSmithUserSensor(CoordinatorEntity, SensorEntity):
 
     _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_enabled_default = False
     _attr_translation_key = "user"
 
     def __init__(self, coordinator: PocketSmithCoordinator) -> None:
@@ -500,7 +502,7 @@ class PocketSmithBackfillSensor(CoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "backfill_status"
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_icon = "mdi:database-clock-outline"
+    _attr_entity_registry_enabled_default = False
 
     def __init__(self, coordinator: PocketSmithCoordinator, backfill_state: BackfillState) -> None:
         """Initialise the sensor."""

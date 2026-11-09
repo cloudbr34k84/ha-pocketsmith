@@ -36,7 +36,9 @@ def async_register_actions(hass: HomeAssistant) -> None:
                 await coordinator.async_request_refresh()
             except Exception as err:
                 _LOGGER.exception("PocketSmith refresh action failed")
-                raise HomeAssistantError("Unable to refresh PocketSmith data") from err
+                raise HomeAssistantError(
+                    translation_domain=DOMAIN, translation_key="refresh_failed"
+                ) from err
             _LOGGER.debug("PocketSmith manual refresh triggered")
 
     async def handle_reset_backfill(call: ServiceCall) -> None:
@@ -53,7 +55,9 @@ def async_register_actions(hass: HomeAssistant) -> None:
                 clear_backfill_failed_issue(hass)
             except Exception as err:
                 _LOGGER.exception("PocketSmith backfill reset failed")
-                raise HomeAssistantError("Unable to reset PocketSmith backfill progress") from err
+                raise HomeAssistantError(
+                    translation_domain=DOMAIN, translation_key="reset_backfill_failed"
+                ) from err
             _LOGGER.info("PocketSmith backfill progress reset — starting a new sweep")
 
             for entry in loaded_entries():
@@ -62,7 +66,9 @@ def async_register_actions(hass: HomeAssistant) -> None:
                     await async_trigger_backfill(hass, coordinator, coordinator.data, entry, entry.runtime_data.backfill)
                 except Exception as err:
                     _LOGGER.exception("PocketSmith backfill restart failed")
-                    raise HomeAssistantError("Unable to restart PocketSmith backfill") from err
+                    raise HomeAssistantError(
+                        translation_domain=DOMAIN, translation_key="restart_backfill_failed"
+                    ) from err
 
     async def handle_get_budget_summary(call: ServiceCall) -> ServiceResponse:
         """Return current budget summary as structured data."""
@@ -94,7 +100,9 @@ def async_register_actions(hass: HomeAssistant) -> None:
                 }
             except Exception as err:
                 _LOGGER.exception("PocketSmith budget summary action failed")
-                raise HomeAssistantError("Unable to read PocketSmith budget summary") from err
+                raise HomeAssistantError(
+                    translation_domain=DOMAIN, translation_key="budget_summary_failed"
+                ) from err
         return {}
 
     hass.services.async_register(DOMAIN, "refresh", handle_refresh)

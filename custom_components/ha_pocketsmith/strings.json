@@ -114,6 +114,12 @@
       "description": "Return the current budget summary as structured data for use in automations."
     }
   },
+  "exceptions": {
+    "refresh_failed": {"message": "Unable to refresh PocketSmith data."},
+    "reset_backfill_failed": {"message": "Unable to reset PocketSmith backfill progress."},
+    "restart_backfill_failed": {"message": "Unable to restart PocketSmith backfill."},
+    "budget_summary_failed": {"message": "Unable to read the PocketSmith budget summary."}
+  },
   "issues": {
     "uncategorised_transactions": {
       "title": "PocketSmith: {count} uncategorised transaction(s)",

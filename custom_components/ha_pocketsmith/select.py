@@ -32,7 +32,6 @@ class PocketSmithActiveCurrencySelect(CoordinatorEntity, SelectEntity):
     _attr_has_entity_name = True
     _attr_translation_key = "active_currency"
     _attr_entity_category = EntityCategory.CONFIG
-    _attr_icon = "mdi:currency-usd"
 
     def __init__(self, coordinator: PocketSmithCoordinator, entry: ConfigEntry) -> None:
         """Initialise the select entity."""
