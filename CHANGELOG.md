@@ -1,4 +1,4 @@
-## [v0.6.0] - Unreleased
+## [v0.6.0] - 2026-11-10
 
 ### Changed
 - Enable strict mypy checks for every integration module and type the config-entry runtime data.
