@@ -1,4 +1,4 @@
-## Unreleased
+## [v0.6.1] - 2026-11-10
 
 ### Changed
 - Rename the GitHub repository and development checkout to `ha-pocketsmith`.
