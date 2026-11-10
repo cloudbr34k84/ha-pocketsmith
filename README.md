@@ -9,8 +9,6 @@
 
 # PocketSmith Integration for Home Assistant
 
-![PocketSmith Home Assistant Integration](https://raw.githubusercontent.com/cloudbr34k84/ha-pocketsmith/main/custom_components/ha_pocketsmith/brand/icon.png)
-
 ## Overview
 
 [PocketSmith](https://www.pocketsmith.com/) is a personal finance and budgeting platform that connects to your bank accounts, tracks transactions, and projects your future cash flow. This Home Assistant integration pulls live data from the PocketSmith API and exposes it as sensors, binary sensors, buttons, and controls — giving you full visibility into your finances right inside your smart home.
