@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="PocketSmith%20Home%20Assistant%20integration%20banner.png" alt="PocketSmith for Home Assistant banner" width="100%">
+</p>
+
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
 [![Tests](https://github.com/cloudbr34k84/ha-pocketsmith/actions/workflows/tests.yaml/badge.svg)](https://github.com/cloudbr34k84/ha-pocketsmith/actions/workflows/tests.yaml)
 [![Validate with hassfest](https://github.com/cloudbr34k84/ha-pocketsmith/actions/workflows/hassfest.yaml/badge.svg)](https://github.com/cloudbr34k84/ha-pocketsmith/actions/workflows/hassfest.yaml)
