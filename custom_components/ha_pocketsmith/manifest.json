@@ -8,10 +8,10 @@
   "dependencies": [
     "recorder"
   ],
-  "documentation": "https://github.com/cloudbr34k84/home-assistant-pocketsmith",
+  "documentation": "https://github.com/cloudbr34k84/ha-pocketsmith",
   "integration_type": "service",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/cloudbr34k84/home-assistant-pocketsmith/issues",
+  "issue_tracker": "https://github.com/cloudbr34k84/ha-pocketsmith/issues",
   "requirements": [],
   "version": "0.6.0"
 }

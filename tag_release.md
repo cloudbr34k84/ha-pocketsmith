@@ -1,4 +1,4 @@
-## Release Tag Checklist for home-assistant-pocketsmith
+## Release Tag Checklist for ha-pocketsmith
 ### Step 1 — Confirm your code is ready
 Before tagging, make sure:
 - All changes are committed and pushed to main

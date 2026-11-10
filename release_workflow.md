@@ -15,7 +15,7 @@ When you push a version tag (e.g. `v0.4.4`), two GitHub Actions workflows fire a
 ## Working Directory
 Always make changes in:
 ```
-/config/home-assistant-pocketsmith/custom_components/ha_pocketsmith
+/config/ha-pocketsmith/custom_components/ha_pocketsmith
 ```
 
 ---
@@ -93,7 +93,7 @@ Once the tag is pushed, two workflows run in parallel.
 
 Monitor both workflows in the **Actions tab** on GitHub:
 ```
-https://github.com/cloudbr34k84/home-assistant-pocketsmith/actions
+https://github.com/cloudbr34k84/ha-pocketsmith/actions
 ```
 
 ---

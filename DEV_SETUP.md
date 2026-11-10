@@ -7,13 +7,13 @@ The repo uses the standard HACS layout where integration files live inside `cust
 ```
 /homeassistant/
 ├── brads_dev/
-│   └── home-assistant-pocketsmith/    ← git repo (edit files here)
+│   └── ha-pocketsmith/    ← git repo (edit files here)
 │       ├── custom_components/
 │       │   └── ha_pocketsmith/        ← actual integration source
 │       ├── tests/
 │       └── ...
 └── custom_components/
-    └── ha_pocketsmith -> /homeassistant/brads_dev/home-assistant-pocketsmith/custom_components/ha_pocketsmith
+    └── ha_pocketsmith -> ../brads_dev/ha-pocketsmith/custom_components/ha_pocketsmith
                                        ← symlink (HA loads from here)
 ```
 
@@ -22,7 +22,7 @@ The repo uses the standard HACS layout where integration files live inside `cust
 Always edit files inside the **git repo**:
 
 ```
-/homeassistant/brads_dev/home-assistant-pocketsmith/custom_components/ha_pocketsmith/
+/homeassistant/brads_dev/ha-pocketsmith/custom_components/ha_pocketsmith/
 ```
 
 Changes are immediately visible to Home Assistant through the symlink — no copying needed.
@@ -32,9 +32,12 @@ Changes are immediately visible to Home Assistant through the symlink — no cop
 If the symlink is ever lost (e.g. after a container rebuild), recreate it with:
 
 ```bash
-ln -s /homeassistant/brads_dev/home-assistant-pocketsmith/custom_components/ha_pocketsmith \
-      /homeassistant/custom_components/ha_pocketsmith
+cd /homeassistant/custom_components
+ln -s ../brads_dev/ha-pocketsmith/custom_components/ha_pocketsmith ha_pocketsmith
 ```
+
+The relative link resolves from both `/homeassistant` in the SSH add-on and
+`/config` inside the Home Assistant container.
 
 ## After Making Changes
 
@@ -47,7 +50,7 @@ ln -s /homeassistant/brads_dev/home-assistant-pocketsmith/custom_components/ha_p
 ## Git Workflow
 
 ```bash
-cd /homeassistant/brads_dev/home-assistant-pocketsmith
+cd /homeassistant/brads_dev/ha-pocketsmith
 
 git pull          # get latest from GitHub
 # ... make changes ...

@@ -1,3 +1,10 @@
+## Unreleased
+
+### Changed
+- Rename the GitHub repository and development checkout to `ha-pocketsmith`.
+- Update manifest, HACS, branding and contributor links, plus the development symlink instructions.
+- Keep the `ha_pocketsmith` domain and existing configuration and entity IDs unchanged.
+
 ## [v0.6.0] - 2026-11-10
 
 ### Changed

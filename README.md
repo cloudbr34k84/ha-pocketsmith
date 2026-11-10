@@ -1,11 +1,11 @@
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
-[![Tests](https://github.com/cloudbr34k84/home-assistant-pocketsmith/actions/workflows/tests.yaml/badge.svg)](https://github.com/cloudbr34k84/home-assistant-pocketsmith/actions/workflows/tests.yaml)
-[![Validate with hassfest](https://github.com/cloudbr34k84/home-assistant-pocketsmith/actions/workflows/hassfest.yaml/badge.svg)](https://github.com/cloudbr34k84/home-assistant-pocketsmith/actions/workflows/hassfest.yaml)
-[![Validate with HACS](https://github.com/cloudbr34k84/home-assistant-pocketsmith/actions/workflows/validate.yaml/badge.svg)](https://github.com/cloudbr34k84/home-assistant-pocketsmith/actions/workflows/validate.yaml)
+[![Tests](https://github.com/cloudbr34k84/ha-pocketsmith/actions/workflows/tests.yaml/badge.svg)](https://github.com/cloudbr34k84/ha-pocketsmith/actions/workflows/tests.yaml)
+[![Validate with hassfest](https://github.com/cloudbr34k84/ha-pocketsmith/actions/workflows/hassfest.yaml/badge.svg)](https://github.com/cloudbr34k84/ha-pocketsmith/actions/workflows/hassfest.yaml)
+[![Validate with HACS](https://github.com/cloudbr34k84/ha-pocketsmith/actions/workflows/validate.yaml/badge.svg)](https://github.com/cloudbr34k84/ha-pocketsmith/actions/workflows/validate.yaml)
 
 # PocketSmith Integration for Home Assistant
 
-![PocketSmith Home Assistant Integration](https://raw.githubusercontent.com/cloudbr34k84/home-assistant-pocketsmith/main/custom_components/ha_pocketsmith/brand/icon.png)
+![PocketSmith Home Assistant Integration](https://raw.githubusercontent.com/cloudbr34k84/ha-pocketsmith/main/custom_components/ha_pocketsmith/brand/icon.png)
 
 ## Overview
 
@@ -56,7 +56,7 @@
 
 1. Open **HACS** in Home Assistant.
 2. Go to **Integrations** and click the menu (⋮) → **Custom repositories**.
-3. Add `https://github.com/cloudbr34k84/home-assistant-pocketsmith` as an **Integration**.
+3. Add `https://github.com/cloudbr34k84/ha-pocketsmith` as an **Integration**.
 4. Search for **PocketSmith** in HACS and click **Download**.
 5. Restart Home Assistant.
 
@@ -593,7 +593,7 @@ if you no longer want it; do not edit storage files while HA is running.
 
 ## Contributing
 
-Issues and pull requests are welcome at the [GitHub repository](https://github.com/cloudbr34k84/home-assistant-pocketsmith).
+Issues and pull requests are welcome at the [GitHub repository](https://github.com/cloudbr34k84/ha-pocketsmith).
 
 ---
 
